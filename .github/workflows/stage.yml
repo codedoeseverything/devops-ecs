@@ -33,7 +33,7 @@ jobs:
       REGION : ap-southeast-2
       ENV : stage # Valid values are sandbox,stage,live only
       STACK_NAME: beta # Valid values are au,us,uk,p2,lf,nu,alpha,beta,shared only
-      SUBDOMAIN: devops-db
+      SUBDOMAIN: devops-ecs
       CFNS3BucketName: devops-cfn-templates1
 
 
