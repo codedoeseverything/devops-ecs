@@ -29,37 +29,6 @@ Parameters:
       - stage
       - live
     ConstraintDescription: must specify sandbox,stage,live.
-  ParentVPCStack:
-    Description: 'Stack name of parent VPC stack based on vpc/vpc-*azs.yaml template.'
-    Type: String
-  ParentSSHBastionStack:
-    Description: 'Optional but recommended stack name of parent SSH bastion host/instance stack based on vpc/vpc-*-bastion.yaml template.'
-    Type: String
-    Default: ''
-  ParentAuthProxyStack:
-    Description: 'Optional stack name of parent auth proxy stack based on security/auth-proxy-*.yaml template.'
-    Type: String
-    Default: ''
-  ParentAlertStack:
-    Description: 'Optional but recommended stack name of parent alert stack based on operations/alert.yaml template.'
-    Type: String
-    Default: ''
-  ParentS3StackAccessLog:
-    Description: 'Optional stack name of parent s3 stack based on state/s3.yaml template (with Access set to ElbAccessLogWrite) to store access logs.'
-    Type: String
-    Default: ''
-  ParentClientStack1:
-    Description: 'Optional stack name of parent Client Security Group stack based on state/client-sg.yaml template to allow network access from the cluster to whatever uses the client security group.'
-    Type: String
-    Default: ''
-  ParentClientStack2:
-    Description: 'Optional stack name of parent Client Security Group stack based on state/client-sg.yaml template to allow network access from the cluster to whatever uses the client security group.'
-    Type: String
-    Default: ''
-  ParentClientStack3:
-    Description: 'Optional stack name of parent Client Security Group stack based on state/client-sg.yaml template to allow network access from the cluster to whatever uses the client security group.'
-    Type: String
-    Default: ''
   KeyName:
     Description: 'Optional key pair of the ec2-user to establish a SSH connection to the EC2 instances of the ECS cluster.'
     Type: String
@@ -185,22 +154,13 @@ Mappings:
       ECSAMI: 'ami-0ec4aded37931c8b5'
     'us-west-2':
       ECSAMI: 'ami-0b58521c622a24969'
+
 Conditions:
   HasKeyName: !Not [!Equals [!Ref KeyName, '']]
   HasIAMUserSSHAccess: !Equals [!Ref IAMUserSSHAccess, 'true']
   HasSystemsManagerAccess: !Equals [!Ref SystemsManagerAccess, 'true']
-  HasNotSSHBastionSecurityGroup: !Equals [!Ref ParentSSHBastionStack, '']
-  HasAuthProxySecurityGroup: !Not [!Equals [!Ref ParentAuthProxyStack, '']]
-  HasNotAuthProxySecurityGroup: !Equals [!Ref ParentAuthProxyStack, '']
   HasLoadBalancerSchemeInternal: !Equals [!Ref LoadBalancerScheme, 'internal']
   HasLoadBalancerCertificateArn: !Not [!Equals [!Ref LoadBalancerCertificateArn, '']]
-  HasAuthProxySecurityGroupAndLoadBalancerCertificateArn: !And [!Condition HasAuthProxySecurityGroup, !Condition HasLoadBalancerCertificateArn]
-  HasNotAuthProxySecurityGroupAndLoadBalancerCertificateArn: !And [!Condition HasNotAuthProxySecurityGroup, !Condition HasLoadBalancerCertificateArn]
-  HasAlertTopic: !Not [!Equals [!Ref ParentAlertStack, '']]
-  HasS3Bucket: !Not [!Equals [!Ref ParentS3StackAccessLog, '']]
-  HasClientSecurityGroup1: !Not [!Equals [!Ref ParentClientStack1, '']]
-  HasClientSecurityGroup2: !Not [!Equals [!Ref ParentClientStack2, '']]
-  HasClientSecurityGroup3: !Not [!Equals [!Ref ParentClientStack3, '']]
   HasManagedPolicyArns: !Not [!Equals [!Ref ManagedPolicyArns, '']]
 
 Resources:
@@ -223,9 +183,13 @@ Resources:
     Properties:
       Roles:
       - !Ref Role
+
   Role:
     Type: 'AWS::IAM::Role'
     Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${StackName}-iamrole-${Env}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -234,7 +198,6 @@ Resources:
             Service: 'ec2.amazonaws.com'
           Action: 'sts:AssumeRole'
       ManagedPolicyArns: !If [HasManagedPolicyArns, !Split [',', !Ref ManagedPolicyArns], !Ref 'AWS::NoValue']
-      
       Policies:
       - !If
         - HasSystemsManagerAccess
@@ -306,6 +269,7 @@ Resources:
             - 'logs:PutLogEvents'
             - 'logs:DescribeLogStreams'
             Resource: !GetAtt 'LogGroup.Arn'
+
   IAMPolicySSHAccess:
     Type: 'AWS::IAM::Policy'
     Condition: HasIAMUserSSHAccess
@@ -345,6 +309,7 @@ Resources:
       - Name: LoadBalancer
         Value: !GetAtt 'LoadBalancer.LoadBalancerFullName'
       TreatMissingData: notBreaching
+
   HTTPCodeTarget5XXTooHighAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -364,6 +329,7 @@ Resources:
       - Name: TargetGroup
         Value: !GetAtt 'DefaultTargetGroup.TargetGroupFullName'
       TreatMissingData: notBreaching
+
   RejectedConnectionCountTooHighAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -381,6 +347,7 @@ Resources:
       - Name: LoadBalancer
         Value: !GetAtt 'LoadBalancer.LoadBalancerFullName'
       TreatMissingData: notBreaching
+
   TargetConnectionErrorCountTooHighAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -404,13 +371,15 @@ Resources:
   LoadBalancer: # not monitored, but DefaultTargetGroup is monitored!
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:
+      Name: !Sub '${StackName}-loadBalancer-${Env}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${StackName}-loadBalancer-${Env}'
       LoadBalancerAttributes:
       - Key: 'idle_timeout.timeout_seconds'
         Value: !Ref LoadBalancerIdleTimeout
       - Key: 'routing.http2.enabled'
         Value: 'true'
-      - Key: 'access_logs.s3.enabled'
-        Value: !If [HasS3Bucket, 'true', 'false']
       Scheme: !Ref LoadBalancerScheme
       SecurityGroups:
       - {'Fn::ImportValue': !Sub '${StackName}-ALBPublicSecurityGroup-${Env}'}
@@ -418,9 +387,14 @@ Resources:
       - HasLoadBalancerSchemeInternal
       - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPrivate-${Env}'}]
       - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPublic-${Env}'}]
+  
   DefaultTargetGroup: # this is used as the fall-back target group and is used to health checking the ECS agent. Services use their own ListenerRules to accept traffic based on path prefixes.
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
+      Name: !Sub '${StackName}-default-tg-${Env}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${StackName}-default-tg-${Env}'
       HealthCheckIntervalSeconds: 15
       HealthCheckPort: '51678'
       HealthCheckPath: '/v1/metadata'
@@ -436,6 +410,7 @@ Resources:
       TargetGroupAttributes:
       - Key: 'deregistration_delay.timeout_seconds'
         Value: '0'
+
   HttpListener:
     Type: 'AWS::ElasticLoadBalancingV2::Listener'
     Properties:
@@ -445,6 +420,7 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
+
   HttpsListener:
     Type: 'AWS::ElasticLoadBalancingV2::Listener'
     Condition: HasLoadBalancerCertificateArn
@@ -458,6 +434,7 @@ Resources:
       Port: 443
       Protocol: HTTPS
       SslPolicy: 'ELBSecurityPolicy-FS-1-2-Res-2019-08'
+
   LaunchTemplate:
     Type: 'AWS::EC2::LaunchTemplate'
     Metadata:
@@ -694,6 +671,7 @@ Resources:
                 - '/etc/cfn/hooks.d/cfn-auto-reloader.conf'
               
     Properties:
+      LaunchTemplateName: !Sub '${StackName}-ecs-launchTemplate-${Env}'
       LaunchTemplateData:
         BlockDeviceMappings:
         - DeviceName: '/dev/xvda'
@@ -728,6 +706,7 @@ Resources:
   AutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
+      AutoScalingGroupName: !Sub '${StackName}-ecs-autoscaling-${Env}'
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt 'LaunchTemplate.LatestVersionNumber'
@@ -742,13 +721,11 @@ Resources:
       - Granularity: '1Minute'
         Metrics:
         - 'GroupDesiredCapacity'
-      NotificationConfigurations: !If
-      - HasAlertTopic
-      - - NotificationTypes:
-          - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
-          - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
-          TopicARN: {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
-      - []
+      NotificationConfigurations:
+      - NotificationTypes:
+        - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+        - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
+        TopicARN: {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
       VPCZoneIdentifier: !Split [',', {'Fn::ImportValue': !Sub '${StackName}-Subnets${SubnetsReach}-${Env}'}]
       Tags:
       - Key: Name
@@ -767,6 +744,7 @@ Resources:
         - AlarmNotification
         - ScheduledActions
         WaitOnResourceSignals: true
+
   CPUTooHighAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -833,6 +811,7 @@ Resources:
       - Name: QueueName
         Value: !GetAtt 'AutoScalingGroupLifecycleHookDeadLetterQueue.QueueName'
       TreatMissingData: notBreaching
+
   AutoScalingGroupLifecycleHookIAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -854,6 +833,7 @@ Resources:
             - 'sqs:SendMessage'
             - 'sqs:GetQueueUrl'
             Resource: !GetAtt 'AutoScalingGroupLifecycleHookQueue.Arn'
+
   AutoScalingGroupTerminatingLifecycleHook:
     Type: 'AWS::AutoScaling::LifecycleHook'
     Properties:
@@ -863,6 +843,7 @@ Resources:
       LifecycleTransition: 'autoscaling:EC2_INSTANCE_TERMINATING'
       NotificationTargetARN: !GetAtt 'AutoScalingGroupLifecycleHookQueue.Arn'
       RoleARN: !GetAtt 'AutoScalingGroupLifecycleHookIAMRole.Arn'
+
   ScaleUpPolicy:
     Type: 'AWS::AutoScaling::ScalingPolicy'
     Properties:
@@ -873,6 +854,7 @@ Resources:
       StepAdjustments:
       - MetricIntervalUpperBound: 0.0
         ScalingAdjustment: 1
+
   ScaleDownPolicy:
     Type: 'AWS::AutoScaling::ScalingPolicy'
     Properties:
@@ -883,6 +865,7 @@ Resources:
       StepAdjustments:
       - MetricIntervalLowerBound: 0.0
         ScalingAdjustment: -1
+
   NotEnoughClusterCapacityRule:
     Type: 'AWS::Events::Rule'
     Properties:
@@ -903,6 +886,7 @@ Resources:
       Targets:
       - Arn: !GetAtt 'ScaleUpLambda.Arn'
         Id: lambda
+
   ContainerInstancesExcessAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -1034,7 +1018,6 @@ Resources:
           Principal:
             Service: 'lambda.amazonaws.com'
           Action: 'sts:AssumeRole'
-      
       Policies:
       - PolicyName: autoscaling
         PolicyDocument:
@@ -1042,6 +1025,7 @@ Resources:
           - Effect: Allow
             Action: 'autoscaling:ExecutePolicy'
             Resource: '*' # CloudFormation does not provide a way to access the ASG ID but ARN requires ASG ID.
+  
   ScaleUpLambdaPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
@@ -1055,6 +1039,7 @@ Resources:
           - 'logs:CreateLogStream'
           - 'logs:PutLogEvents'
           Resource: !GetAtt 'ScaleUpLogGroup.Arn'
+
   ScaleUpLambdaPermission:
     Type: 'AWS::Lambda::Permission'
     Properties:
@@ -1062,6 +1047,7 @@ Resources:
       FunctionName: !Ref ScaleUpLambda
       Principal: 'events.amazonaws.com'
       SourceArn: !GetAtt 'NotEnoughClusterCapacityRule.Arn'
+      
   ScaleUpLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
@@ -1324,50 +1310,40 @@ Outputs:
     Description: 'ECS cluster.'
     Value: !Ref Cluster
     Export:
-      Name: !Sub '${AWS::StackName}-Cluster'
+      Name: !Sub '${StackName}-ecs-cluster-${Env}'
   LoadBalancerFullName:
     Description: 'ALB full name for services.'
     Value: !GetAtt 'LoadBalancer.LoadBalancerFullName'
     Export:
-      Name: !Sub '${AWS::StackName}-LoadBalancerFullName'
+      Name: !Sub '${StackName}-loadbalancer-${Env}'
   HttpListener:
     Description: 'ALB HTTP listener for services.'
     Value: !Ref HttpListener
     Export:
-      Name: !Sub '${AWS::StackName}-HttpListener'
+      Name: !Sub '${StackName}-httplistener-${Env}'
   HttpsListener:
     Condition: HasLoadBalancerCertificateArn
     Description: 'ALB HTTPS listener for services.'
     Value: !Ref HttpsListener
     Export:
-      Name: !Sub '${AWS::StackName}-HttpsListener'
+      Name: !Sub '${StackName}-httpslistener-${Env}'
   CanonicalHostedZoneID:
     Description: 'The ID of the Amazon Route 53 hosted zone associated with the load balancer.'
     Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
     Export:
-      Name: !Sub '${AWS::StackName}-CanonicalHostedZoneID'
-  VPC:
-    Description: 'VPC of ECS cluster.'
-    Value: {'Fn::ImportValue': !Sub '${ParentVPCStack}-VPC'}
-    Export:
-      Name: !Sub '${AWS::StackName}-VPC'
-  SecurityGroup:
-    Description: 'Security Group of ECS cluster.'
-    Value: !Ref SecurityGroup
-    Export:
-      Name: !Sub '${AWS::StackName}-SecurityGroup'
+      Name: !Sub '${StackName}-ALB-CanonicalHostedZoneID-${Env}'
   LogGroup:
     Description: 'Log group of ECS cluster.'
     Value: !Ref LogGroup
     Export:
-      Name: !Sub '${AWS::StackName}-LogGroup'
+      Name: !Sub '${StackName}-ecs-log-group-${Env}'
   DNSName:
     Description: 'The DNS name for the ECS cluster load balancer.'
     Value: !GetAtt 'LoadBalancer.DNSName'
     Export:
-      Name: !Sub '${AWS::StackName}-DNSName'
+      Name: !Sub '${StackName}-ALB-DNSNAME-${Env}'
   URL:
     Description: 'URL to the ECS cluster.'
     Value: !Sub 'http://${LoadBalancer.DNSName}'
     Export:
-      Name: !Sub '${AWS::StackName}-URL'
+      Name: !Sub '${StackName}-ALB-URL-${Env}'

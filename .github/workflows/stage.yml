@@ -140,7 +140,9 @@ jobs:
           Env=$ENV
           CFNS3BucketName=$CFNS3BucketName
           CFNS3BucketRegion=ap-southeast-2
-
+          KeyName=$STACK_NAME-$REGION
+          LoadBalancerCertificateArn=
+          
           EOF
       
 
