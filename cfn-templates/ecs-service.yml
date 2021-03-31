@@ -101,7 +101,7 @@ Resources:
   TaskDefinition:
     Type: 'AWS::ECS::TaskDefinition'
     Properties:
-       Tags:
+      Tags:
         - Key: Name
           Value: !Sub '${StackName}-admin-td-${Env}'
       Family: !Sub '${StackName}-admin-td-${Env}'
