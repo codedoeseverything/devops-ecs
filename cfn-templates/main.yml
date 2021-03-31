@@ -58,13 +58,13 @@ Parameters:
     Type: Number
     Default: 14
     AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
-  MaxSize:
+  MaxSizeInstances:
     Description: 'The maximum size of the Auto Scaling group.'
     Type: Number
     Default: 4
     ConstraintDescription: 'Must be >= 1'
     MinValue: 1
-  MinSize:
+  MinSizeInstances:
     Description: 'The minimum size of the Auto Scaling group.'
     Type: Number
     Default: 2
@@ -84,6 +84,44 @@ Parameters:
     ConstraintDescription: 'Must be in the range [30-3600]'
     MinValue: 30
     MaxValue: 3600
+  Image:
+    Description: 'The image to use for a container, which is passed directly to the Docker daemon. You can use images in the Docker Hub registry or specify other repositories (repository-url/image:tag).'
+    Type: String
+    Default: nginx
+  MinCapacityTask:
+    Description: 'The minimum number of simultaneous tasks, that you want to run on the cluster.'
+    Type: Number
+    Default: 2
+    ConstraintDescription: 'Must be >= 1'
+    MinValue: 1
+  MaxCapacityTask:
+    Description: 'The maximum number of simultaneous tasks, that you want to run on the cluster.'
+    Type: Number
+    Default: 4
+    ConstraintDescription: 'Must be >= 1'
+    MinValue: 1
+  DesiredCountTask:
+    Description: 'The number of simultaneous tasks, which you specify by using the TaskDefinition property, that you want to run on the cluster.'
+    Type: Number
+    Default: 2
+    ConstraintDescription: 'Must be >= 1'
+    MinValue: 1
+  SubDomainNameWithDot:
+    Description: 'Name that is used to create the DNS entry with trailing dot, e.g. §{SubDomainNameWithDot}§{HostedZoneName}. Leave blank for naked (or apex and bare) domain. Requires ParentZoneStack parameter!'
+    Type: String
+    Default: ''
+  TaskAutoScaling:
+    Description: 'Scale number of tasks based on CPU load?'
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+  HealthCheckGracePeriod:
+    Description: 'The period of time, in seconds, that the Amazon ECS service scheduler ignores unhealthy Elastic Load Balancing target health checks after a task has first started.'
+    Type: Number
+    Default: 60
+    MinValue: 0
+    MaxValue: 1800
+  
 
 Resources:
   ECSClusterStack:
@@ -97,10 +135,27 @@ Resources:
         LoadBalancerCertificateArn: !Ref LoadBalancerCertificateArn
         InstanceType: !Ref InstanceType
         LogsRetentionInDays: !Ref LogsRetentionInDays
-        MaxSize: !Ref MaxSize
-        MinSize: !Ref MinSize
+        MaxSize: !Ref MaxSizeInstances
+        MinSize: !Ref MinSizeInstances
         DrainingTimeoutInSeconds: !Ref DrainingTimeoutInSeconds
         StopContainerTimeoutInSeconds: !Ref StopContainerTimeoutInSeconds
+  
+
+  ECSServiceStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-service.yml'
+      Parameters:
+        StackName: !Ref StackName
+        Env: !Ref Env
+        LoadBalancerCertificateArn: !Ref LoadBalancerCertificateArn
+        Image: !Ref Image
+        MinCapacity: !Ref MinCapacityTask
+        MaxCapacity: !Ref MaxCapacityTask
+        DesiredCount: !Ref DesiredCountTask
+        SubDomainNameWithDot: !Ref SubDomainNameWithDot
+        AutoScaling: !Ref TaskAutoScaling
+        HealthCheckGracePeriod: !Ref HealthCheckGracePeriod
 
 
   

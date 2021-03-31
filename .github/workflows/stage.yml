@@ -129,6 +129,14 @@ jobs:
           python3 scripts/cfn-param-json-convert.py config/cfn.tags
 
 
+##############################################################
+#  CLOUDFORMATION EXPORT VARIABLES
+###############################################################      
+      - name: Export cloudformation variables
+        run: |
+          export APPCERTARN=${{ env.STACK_NAME }}-APPSharedACMCertificateArn-${{ env.ENV }}
+          echo "APPCERTARN="$(aws cloudformation list-exports --query "Exports[?Name==\`$APPCERTARN\`].Value" --no-paginate --output text) >> $GITHUB_ENV
+
 
 #############################################################################
 #  CLOUDFORMATION ADDITIONAL PARAMETERS (SECRETS INCLUDED); KEY=VALUE FORMAT
@@ -141,7 +149,7 @@ jobs:
           CFNS3BucketName=$CFNS3BucketName
           CFNS3BucketRegion=ap-southeast-2
           KeyName=$STACK_NAME-$REGION
-          LoadBalancerCertificateArn=
+          LoadBalancerCertificateArn=$APPCERTARN
           
           EOF
       
