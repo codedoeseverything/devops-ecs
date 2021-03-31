@@ -141,21 +141,21 @@ Resources:
         StopContainerTimeoutInSeconds: !Ref StopContainerTimeoutInSeconds
   
 
-  ECSServiceStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-service.yml'
-      Parameters:
-        StackName: !Ref StackName
-        Env: !Ref Env
-        LoadBalancerCertificateArn: !Ref LoadBalancerCertificateArn
-        Image: !Ref Image
-        MinCapacity: !Ref MinCapacityTask
-        MaxCapacity: !Ref MaxCapacityTask
-        DesiredCount: !Ref DesiredCountTask
-        SubDomainNameWithDot: !Ref SubDomainNameWithDot
-        AutoScaling: !Ref TaskAutoScaling
-        HealthCheckGracePeriod: !Ref HealthCheckGracePeriod
+  # ECSServiceStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-service.yml'
+  #     Parameters:
+  #       StackName: !Ref StackName
+  #       Env: !Ref Env
+  #       LoadBalancerCertificateArn: !Ref LoadBalancerCertificateArn
+  #       Image: !Ref Image
+  #       MinCapacity: !Ref MinCapacityTask
+  #       MaxCapacity: !Ref MaxCapacityTask
+  #       DesiredCount: !Ref DesiredCountTask
+  #       SubDomainNameWithDot: !Ref SubDomainNameWithDot
+  #       AutoScaling: !Ref TaskAutoScaling
+  #       HealthCheckGracePeriod: !Ref HealthCheckGracePeriod
 
 
   
