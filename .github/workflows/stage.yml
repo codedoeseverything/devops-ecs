@@ -135,10 +135,13 @@ jobs:
 #############################################################################
       - name: Create additional cloudformation parameters for stack deployment
         run: |
+          cat >> config/cfn.params <<EOF 
           StackName=$STACK_NAME
           Env=$ENV
           CFNS3BucketName=$CFNS3BucketName
           CFNS3BucketRegion=ap-southeast-2
+
+          EOF
       
 
 ##########################################################
