@@ -41,36 +41,15 @@ Parameters:
       - stage
       - live
     ConstraintDescription: must specify sandbox,stage,live.
-  
 
-Conditions:
-  RDSServerless: !Equals
-      - !Ref 'ISRDSServerless'
-      - 'true'
-  NonRDSServerless: !Equals
-      - !Ref 'ISRDSServerless'
-      - 'false'
 
 Resources:
-
-  
-  AuroraServerlessPostgresStack:
-    Condition: RDSServerless
+  ECSClusterStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/aurora-serverless-postgres.yml'
+      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-cluster.yml'
       Parameters:
         StackName: !Ref 'StackName'
         Env: !Ref 'Env'
-        DBSnapshotIdentifier: !Ref 'DBSnapshotIdentifier'
-        DBBackupRetentionPeriod: !Ref 'DBBackupRetentionPeriod'
-        SubDomainNameWithDot: !Ref 'ServerlessSubDomainNameWithDot'
-        EnableDataApi: !Ref 'EnableDataApi'
-        AutoPause: !Ref 'AutoPause'
-        MaxCapacity: !Ref 'MaxCapacity'
-        MinCapacity: !Ref 'MinCapacity'
-        SecondsUntilAutoPause: !Ref 'SecondsUntilAutoPause'
-        EngineVersion: !Ref 'AuroraEngineVersion'
-        DBSecretARN: !Ref 'DBSecretARN'
 
   

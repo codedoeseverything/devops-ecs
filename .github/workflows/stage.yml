@@ -133,18 +133,12 @@ jobs:
 #############################################################################
 #  CLOUDFORMATION ADDITIONAL PARAMETERS (SECRETS INCLUDED); KEY=VALUE FORMAT
 #############################################################################
-      # - name: Create additional cloudformation parameters for stack deployment
-      #   run: |
-      #     export DBARN=$STACK_NAME-DB-$ENV
-      #     cat >> config/cfn.params <<EOF 
-      #     DBSecretARN=$(aws cloudformation list-exports --query "Exports[?Name==\`$DBARN\`].Value" --no-paginate --output text)
-      #     StackName=$STACK_NAME
-      #     Env=$ENV
-      #     CFNS3BucketName=$CFNS3BucketName
-      #     CFNS3BucketRegion=ap-southeast-2
-                   
-      #     EOF
-
+      - name: Create additional cloudformation parameters for stack deployment
+        run: |
+          StackName=$STACK_NAME
+          Env=$ENV
+          CFNS3BucketName=$CFNS3BucketName
+          CFNS3BucketRegion=ap-southeast-2
       
 
 ##########################################################
@@ -170,42 +164,42 @@ jobs:
 ########################################################## 
       - name: Create or Update cloudformation templates from $STACK_NAME AWS account in $REGION region
         run: |
-          # python3 scripts/cfn-deploy.py $STACK_NAME-$SUBDOMAIN-$ENV cfn-templates/main.yml config/cfn-params.json config/cfn-tags.json
-          python3 scripts/cfn-deploy.py $STACK_NAME-$SUBDOMAIN-$ENV https://devops-cfn-templates1.s3-ap-southeast-2.amazonaws.com/beta/ap-southeast-2/cfn-templates/ecs-cluster.yml config/cfn-params.json config/cfn-tags.json
+          python3 scripts/cfn-deploy.py $STACK_NAME-$SUBDOMAIN-$ENV cfn-templates/main.yml config/cfn-params.json config/cfn-tags.json
+         
 
 
 
 ##########################################################
 #  SLACK NOTIFICATION
 ##########################################################       
-      # - name: Slack Notification
-      #   if: always() # Pick up events even if the job fails or is canceled.
-      #   uses: 8398a7/action-slack@v3
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      #     MATRIX_CONTEXT: ${{ toJson(matrix) }} # required
-      #   with:
-      #     status: ${{ job.status }}
-      #     author_name: ${{ env.SUBDOMAIN }} deployed to ${{ env.ENV }} environemnt in ${{ env.STACK_NAME }} AWS account
-      #     mention: 'here'
-      #     if_mention: failure,cancelled
-      #     job_name: centralized # Match the name above.
-      #     fields: repo,commit,eventName,ref,workflow,message,author,job,took
-      #     custom_payload: |
-      #       {
-      #       username: 'GitHub Action CI WorkFlow',
-      #       icon_emoji: ':github:',
-      #       attachments: [{
-      #         color: '${{ job.status }}' === 'success' ? 'good' : ${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-      #         text:
-      #        `${process.env.AS_REPO}\n
-      #         ${process.env.AS_COMMIT}\n
-      #         ${process.env.AS_EVENT_NAME}\n
-      #         @${process.env.AS_REF}\n
-      #         @${process.env.AS_WORKFLOW}\n
-      #         ${process.env.AS_MESSAGE}\n
-      #         ${process.env.AS_AUTHOR}\n
-      #         ${process.env.AS_JOB}\n
-      #         ${process.env.AS_TOOK}`,
-      #       }]
-      #       }
+      - name: Slack Notification
+        if: always() # Pick up events even if the job fails or is canceled.
+        uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          MATRIX_CONTEXT: ${{ toJson(matrix) }} # required
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ env.SUBDOMAIN }} deployed to ${{ env.ENV }} environemnt in ${{ env.STACK_NAME }} AWS account
+          mention: 'here'
+          if_mention: failure,cancelled
+          job_name: centralized # Match the name above.
+          fields: repo,commit,eventName,ref,workflow,message,author,job,took
+          custom_payload: |
+            {
+            username: 'GitHub Action CI WorkFlow',
+            icon_emoji: ':github:',
+            attachments: [{
+              color: '${{ job.status }}' === 'success' ? 'good' : ${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+              text:
+             `${process.env.AS_REPO}\n
+              ${process.env.AS_COMMIT}\n
+              ${process.env.AS_EVENT_NAME}\n
+              @${process.env.AS_REF}\n
+              @${process.env.AS_WORKFLOW}\n
+              ${process.env.AS_MESSAGE}\n
+              ${process.env.AS_AUTHOR}\n
+              ${process.env.AS_JOB}\n
+              ${process.env.AS_TOOK}`,
+            }]
+            }
