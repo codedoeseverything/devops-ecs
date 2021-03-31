@@ -169,8 +169,8 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${StackName}-ECSCluster-${Env}'
-      ClusterName: !Sub '${StackName}-admin-${Env}'
+          Value: !Sub '${StackName}-admin-cluster-${Env}'
+      ClusterName: !Sub '${StackName}-admin-cluster-${Env}'
 
   LogGroup:
     Type: 'AWS::Logs::LogGroup'
@@ -189,7 +189,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${StackName}-iamrole-${Env}'
+          Value: !Sub '${StackName}-admin-iamrole-${Env}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -371,10 +371,10 @@ Resources:
   LoadBalancer: # not monitored, but DefaultTargetGroup is monitored!
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:
-      Name: !Sub '${StackName}-loadBalancer-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-alb-${Env}'
       Tags:
         - Key: Name
-          Value: !Sub '${StackName}-loadBalancer-${Env}'
+          Value: !Sub '${StackName}-admin-cluster-alb-${Env}'
       LoadBalancerAttributes:
       - Key: 'idle_timeout.timeout_seconds'
         Value: !Ref LoadBalancerIdleTimeout
@@ -391,10 +391,10 @@ Resources:
   DefaultTargetGroup: # this is used as the fall-back target group and is used to health checking the ECS agent. Services use their own ListenerRules to accept traffic based on path prefixes.
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
-      Name: !Sub '${StackName}-default-tg-${Env}'
+      Name: !Sub '${StackName}-default-admin-cluster-tg-${Env}'
       Tags:
         - Key: Name
-          Value: !Sub '${StackName}-default-tg-${Env}'
+          Value: !Sub '${StackName}-default-admin-cluster-tg-${Env}'
       HealthCheckIntervalSeconds: 15
       HealthCheckPort: '51678'
       HealthCheckPath: '/v1/metadata'
@@ -671,7 +671,7 @@ Resources:
                 - '/etc/cfn/hooks.d/cfn-auto-reloader.conf'
               
     Properties:
-      LaunchTemplateName: !Sub '${StackName}-ecs-launchTemplate-${Env}'
+      LaunchTemplateName: !Sub '${StackName}-admin-cluster-launchTemplate-${Env}'
       LaunchTemplateData:
         BlockDeviceMappings:
         - DeviceName: '/dev/xvda'
@@ -706,7 +706,7 @@ Resources:
   AutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
-      AutoScalingGroupName: !Sub '${StackName}-ecs-autoscaling-${Env}'
+      AutoScalingGroupName: !Sub '${StackName}-admin-cluster-asg-${Env}'
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt 'LaunchTemplate.LatestVersionNumber'
@@ -729,7 +729,7 @@ Resources:
       VPCZoneIdentifier: !Split [',', {'Fn::ImportValue': !Sub '${StackName}-Subnets${SubnetsReach}-${Env}'}]
       Tags:
       - Key: Name
-        Value: 'ecs-cluster'
+        Value: 'admin-cluster'
         PropagateAtLaunch: true
     CreationPolicy:
       ResourceSignal:
@@ -765,7 +765,7 @@ Resources:
   AutoScalingGroupLifecycleHookQueue:
     Type: 'AWS::SQS::Queue'
     Properties:
-      QueueName: !Sub '${StackName}-lifecycle-hook-${Env}'
+      QueueName: !Sub '${StackName}-admin-cluster-lifecyclehook-${Env}'
       VisibilityTimeout: 60
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt 'AutoScalingGroupLifecycleHookDeadLetterQueue.Arn'
@@ -792,7 +792,7 @@ Resources:
   AutoScalingGroupLifecycleHookDeadLetterQueue:
     Type: 'AWS::SQS::Queue'
     Properties:
-      QueueName: !Sub '${StackName}-lifecycle-hook-dlq-${Env}'
+      QueueName: !Sub '${StackName}-admin-cluster-lifecycle-hook-dlq-${Env}'
 
   AutoScalingGroupLifecycleHookDeadLetterQueueTooHighAlarm:
     Type: 'AWS::CloudWatch::Alarm'
@@ -1310,40 +1310,40 @@ Outputs:
     Description: 'ECS cluster.'
     Value: !Ref Cluster
     Export:
-      Name: !Sub '${StackName}-ecs-cluster-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-${Env}'
   LoadBalancerFullName:
     Description: 'ALB full name for services.'
     Value: !GetAtt 'LoadBalancer.LoadBalancerFullName'
     Export:
-      Name: !Sub '${StackName}-loadbalancer-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-alb-${Env}'
   HttpListener:
     Description: 'ALB HTTP listener for services.'
     Value: !Ref HttpListener
     Export:
-      Name: !Sub '${StackName}-httplistener-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-httplistener-${Env}'
   HttpsListener:
     Condition: HasLoadBalancerCertificateArn
     Description: 'ALB HTTPS listener for services.'
     Value: !Ref HttpsListener
     Export:
-      Name: !Sub '${StackName}-httpslistener-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-httpslistener-${Env}'
   CanonicalHostedZoneID:
     Description: 'The ID of the Amazon Route 53 hosted zone associated with the load balancer.'
     Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
     Export:
-      Name: !Sub '${StackName}-ALB-CanonicalHostedZoneID-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'
   LogGroup:
     Description: 'Log group of ECS cluster.'
     Value: !Ref LogGroup
     Export:
-      Name: !Sub '${StackName}-ecs-log-group-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-log-group-${Env}'
   DNSName:
     Description: 'The DNS name for the ECS cluster load balancer.'
     Value: !GetAtt 'LoadBalancer.DNSName'
     Export:
-      Name: !Sub '${StackName}-ALB-DNSNAME-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'
   URL:
     Description: 'URL to the ECS cluster.'
     Value: !Sub 'http://${LoadBalancer.DNSName}'
     Export:
-      Name: !Sub '${StackName}-ALB-URL-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-URL-${Env}'
