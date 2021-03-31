@@ -261,8 +261,7 @@ Resources:
       - HasLoadBalancerSchemeInternal
       - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPrivate-${Env}'}]
       - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPublic-${Env}'}]
-      SecurityGroups:
-      - !Ref ALBSecurityGroup
+   
 
   # WebACLAssociation:
   #   Type: AWS::WAFv2::WebACLAssociation
