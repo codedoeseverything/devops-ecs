@@ -156,7 +156,7 @@ Resources:
           LogDriver: awslogs
           Options:
             'awslogs-region': !Ref 'AWS::Region'
-            'awslogs-group': {'Fn::ImportValue': !Sub '${StackName}-ecs-log-group-${Env}'}
+            'awslogs-group': {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-log-group-${Env}'}
             'awslogs-stream-prefix': !Ref 'AWS::StackName'
  
   DefaultTargetGroup: # not monitored, but LoadBalancer is monitored!
@@ -279,10 +279,10 @@ Resources:
   LoadBalancer:
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:
-      Name: !Sub '${StackName}-ecs-service-alb-${Env}'
+      Name: !Sub '${StackName}-admin-service-alb-${Env}'
       Tags:
         - Key: Name
-          Value: !Sub '${StackName}-ecs-service-alb-${Env}'
+          Value: !Sub '${StackName}-admin-service-alb-${Env}'
       IpAddressType: !If [HasLoadBalancerSchemeInternal, 'ipv4', 'dualstack']
       LoadBalancerAttributes:
       - Key: 'idle_timeout.timeout_seconds'

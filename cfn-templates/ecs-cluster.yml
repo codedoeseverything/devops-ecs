@@ -391,10 +391,10 @@ Resources:
   DefaultTargetGroup: # this is used as the fall-back target group and is used to health checking the ECS agent. Services use their own ListenerRules to accept traffic based on path prefixes.
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
-      Name: !Sub '${StackName}-default-admin-cluster-tg-${Env}'
+      Name: !Sub '${StackName}-admin-cluster-tg-${Env}'
       Tags:
         - Key: Name
-          Value: !Sub '${StackName}-default-admin-cluster-tg-${Env}'
+          Value: !Sub '${StackName}-admin-cluster-tg-${Env}'
       HealthCheckIntervalSeconds: 15
       HealthCheckPort: '51678'
       HealthCheckPath: '/v1/metadata'
