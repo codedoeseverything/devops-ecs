@@ -167,25 +167,25 @@ Resources:
         StopContainerTimeoutInSeconds: !Ref StopContainerTimeoutInSeconds
   
 
-  ECSServiceStack:
-    DependsOn: [ECSClusterStack]
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-service.yml'
-      Parameters:
-        StackName: !Ref StackName
-        Env: !Ref Env
-        # LoadBalancerHostPattern: !Ref LoadBalancerHostPattern
-        # LoadBalancerPath: !Ref LoadBalancerPath
-        LoadBalancerHttps: !Ref LoadBalancerHttps
-        LoadBalancerDeregistrationDelay: !Ref LoadBalancerDeregistrationDelay
-        Image: !Ref Image
-        DesiredCount: !Ref DesiredCountTask
-        MaxCapacity: !Ref MaxCapacityTask
-        MinCapacity: !Ref MinCapacityTask
-        SubDomainNameWithDot: !Ref SubDomainNameWithDot
-        AutoScaling: !Ref TaskAutoScaling
-        HealthCheckGracePeriod: !Ref HealthCheckGracePeriod
+  # ECSServiceStack:
+  #   DependsOn: [ECSClusterStack]
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-service.yml'
+  #     Parameters:
+  #       StackName: !Ref StackName
+  #       Env: !Ref Env
+  #       # LoadBalancerHostPattern: !Ref LoadBalancerHostPattern
+  #       # LoadBalancerPath: !Ref LoadBalancerPath
+  #       LoadBalancerHttps: !Ref LoadBalancerHttps
+  #       LoadBalancerDeregistrationDelay: !Ref LoadBalancerDeregistrationDelay
+  #       Image: !Ref Image
+  #       DesiredCount: !Ref DesiredCountTask
+  #       MaxCapacity: !Ref MaxCapacityTask
+  #       MinCapacity: !Ref MinCapacityTask
+  #       SubDomainNameWithDot: !Ref SubDomainNameWithDot
+  #       AutoScaling: !Ref TaskAutoScaling
+  #       HealthCheckGracePeriod: !Ref HealthCheckGracePeriod
        
 
 
