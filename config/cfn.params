@@ -1,6 +1,6 @@
 InstanceType=t2.micro
 LogsRetentionInDays=365
-MaxSizeInstances=1
+MaxSizeInstances=5
 MinSizeInstances=1
 DrainingTimeoutInSeconds=600
 StopContainerTimeoutInSeconds=30
