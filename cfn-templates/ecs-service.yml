@@ -45,7 +45,7 @@ Parameters:
   LoadBalancerPath:
     Description: 'Optional path part of the path pattern. E.g., for service, the path pattern will be /service/*.  Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
     Type: String
-    Default: '/'
+    Default: ''
     ConstraintDescription: 'Must not be longer than 255'
     MaxLength: 255
   LoadBalancerHttps:
