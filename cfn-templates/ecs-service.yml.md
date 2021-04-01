@@ -29,32 +29,23 @@ Parameters:
       - stage
       - live
     ConstraintDescription: must specify sandbox,stage,live.
-  LoadBalancerPriority:
-    Description: 'The priority for the rule. Elastic Load Balancing evaluates rules in priority order, from the lowest value to the highest value. If a request satisfies a rule, Elastic Load Balancing ignores all subsequent rules. A target group can have only one rule with a given priority.'
-    Type: Number
-    Default: 1
-    ConstraintDescription: 'Must be in the range [1-99999]'
-    MinValue: 1
-    MaxValue: 99999
-  LoadBalancerHostPattern:
-    Description: 'Optional host pattern. Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
+  LoadBalancerScheme:
+    Description: 'Indicates whether the load balancer in front of the ECS service is internet-facing or internal.'
+    Type: String
+    Default: 'internet-facing'
+    AllowedValues:
+    - 'internet-facing'
+    - internal
+  LoadBalancerCertificateArn:
+    Description: 'Optional Amazon Resource Name (ARN) of the certificate to associate with the load balancer.'
     Type: String
     Default: ''
-    ConstraintDescription: 'Must not be longer than 255'
-    MaxLength: 255
-  LoadBalancerPath:
-    Description: 'Optional path part of the path pattern. E.g., for service, the path pattern will be /service/*.  Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
-    Type: String
-    Default: 'service'
-    ConstraintDescription: 'Must not be longer than 255'
-    MaxLength: 255
-  LoadBalancerHttps:
-    Description: 'If the cluster supports HTTPS (LoadBalancerCertificateArn is set) you can enable HTTPS for the service'
-    Type: String
-    Default: true
-    AllowedValues:
-    - true
-    - false
+  LoadBalancerIdleTimeout:
+    Description: 'The idle timeout value, in seconds.'
+    Type: Number
+    Default: 60
+    MinValue: 1
+    MaxValue: 4000
   LoadBalancerDeregistrationDelay:
     Description: 'The amount time (in seconds) to wait before changing the state of a deregistering target from draining to unused.'
     Type: Number
@@ -67,7 +58,7 @@ Parameters:
     Type: String
     Default: nginx
   DesiredCount:
-    Description: 'The number of simultaneous tasks, that you want to run on the cluster.'
+    Description: 'The number of simultaneous tasks, which you specify by using the TaskDefinition property, that you want to run on the cluster.'
     Type: Number
     Default: 2
     ConstraintDescription: 'Must be >= 1'
@@ -101,9 +92,9 @@ Parameters:
     MaxValue: 1800
 
 Conditions:
-  HasLoadBalancerHttps: !Equals [!Ref LoadBalancerHttps, 'true']
-  HasLoadBalancerPath: !Not [!Equals [!Ref LoadBalancerPath, '']]
-  HasLoadBalancerHostPattern: !Not [!Equals [!Ref LoadBalancerHostPattern, '']]
+  HasLoadBalancerSchemeInternetFacing: !Equals [!Ref LoadBalancerScheme, 'internet-facing']
+  HasLoadBalancerSchemeInternal: !Equals [!Ref LoadBalancerScheme, 'internal']
+  HasLoadBalancerCertificateArn: !Not [!Equals [!Ref LoadBalancerCertificateArn, '']]
   HasAutoScaling: !Equals [!Ref AutoScaling, 'true']
 
 Resources:
@@ -129,35 +120,8 @@ Resources:
             'awslogs-region': !Ref 'AWS::Region'
             'awslogs-group': {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-log-group-${Env}'}
             'awslogs-stream-prefix': !Ref 'AWS::StackName'
-
-  # RecordSet:
-  #   Type: 'AWS::Route53::RecordSet'
-  #   Properties:
-  #     AliasTarget:
-  #       HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'}
-  #       DNSName: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
-  #     HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
-  #     Name: !Sub
-  #     - '${SubDomainNameWithDot}${HostedZoneName}'
-  #     - SubDomainNameWithDot: !Ref SubDomainNameWithDot
-  #       HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
-  #     Type: A
-
-  # RecordSetIPv6: # We can not conditionally create this only if the cluster's ALB has IPv6 turned on. Route53 does not let us query a broken AAAA record either. It just shows up as a Route53 record.
-  #   Condition: HasZone
-  #   Type: 'AWS::Route53::RecordSet'
-  #   Properties:
-  #     AliasTarget:
-  #       HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'}
-  #       DNSName: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
-  #     HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
-  #     Name: !Sub
-  #     - '${SubDomainNameWithDot}${HostedZoneName}'
-  #     - SubDomainNameWithDot: !Ref SubDomainNameWithDot
-  #       HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
-  #     Type: AAAA
-
-  LoadBalancerTargetGroup:
+ 
+  DefaultTargetGroup: # not monitored, but LoadBalancer is monitored!
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
       Name: !Sub '${StackName}-admin-service-tg-${Env}'
@@ -179,6 +143,24 @@ Resources:
       - Key: deregistration_delay.timeout_seconds
         Value: !Ref LoadBalancerDeregistrationDelay
 
+  HTTPCodeELB5XXTooHighAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: 'Application load balancer returns 5XX HTTP status codes'
+      Namespace: 'AWS/ApplicationELB'
+      MetricName: HTTPCode_ELB_5XX_Count
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      AlarmActions:
+      - {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
+      Dimensions:
+      - Name: LoadBalancer
+        Value: !GetAtt LoadBalancer.LoadBalancerFullName
+      TreatMissingData: notBreaching
+
   HTTPCodeTarget5XXTooHighAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -194,9 +176,25 @@ Resources:
       - {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
       Dimensions:
       - Name: LoadBalancer
-        Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-alb-${Env}'}
-      - Name: TargetGroup
-        Value: !GetAtt LoadBalancerTargetGroup.TargetGroupFullName
+        Value: !GetAtt LoadBalancer.LoadBalancerFullName
+      TreatMissingData: notBreaching
+
+  RejectedConnectionCountTooHighAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: 'Application load balancer rejected connections because the load balancer had reached its maximum number of connections'
+      Namespace: 'AWS/ApplicationELB'
+      MetricName: RejectedConnectionCount
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      AlarmActions:
+      - {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
+      Dimensions:
+      - Name: LoadBalancer
+        Value: !GetAtt LoadBalancer.LoadBalancerFullName
       TreatMissingData: notBreaching
 
   TargetConnectionErrorCountTooHighAlarm:
@@ -214,67 +212,86 @@ Resources:
       - {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
       Dimensions:
       - Name: LoadBalancer
-        Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-alb-${Env}'}
-      - Name: TargetGroup
-        Value: !GetAtt LoadBalancerTargetGroup.TargetGroupFullName
+        Value: !GetAtt LoadBalancer.LoadBalancerFullName
       TreatMissingData: notBreaching
 
-  LoadBalancerHttpListenerRule:
-    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+  RecordSet:
+    Type: 'AWS::Route53::RecordSet'
     Properties:
-      Actions:
-      - Type: forward
-        TargetGroupArn: !Ref LoadBalancerTargetGroup
-      Conditions: !If
-      - HasLoadBalancerPath
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
-            Values:
-            - !Ref LoadBalancerHostPattern
-          - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-        - - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
-            Values:
-            - !Ref LoadBalancerHostPattern
-        - [] # neither LoadBalancerHostPattern nor LoadBalancerPath specified
-      ListenerArn: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-httplistener-${Env}'}
-      Priority: !Ref LoadBalancerPriority
+      AliasTarget:
+        HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
+        DNSName: !GetAtt 'LoadBalancer.DNSName'
+      HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
+      Name: !Sub
+      - '${SubDomainNameWithDot}${HostedZoneName}'
+      - SubDomainNameWithDot: !Ref SubDomainNameWithDot
+        HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
+      Type: A
 
-  LoadBalancerHttpsListenerRule:
-    Condition: HasLoadBalancerHttps
-    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+  RecordSetIPv6:
+    Type: 'AWS::Route53::RecordSet'
     Properties:
-      Actions:
-      - Type: forward
-        TargetGroupArn: !Ref LoadBalancerTargetGroup
-      Conditions: !If
-      - HasLoadBalancerPath
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
-            Values:
-            - !Ref LoadBalancerHostPattern
-          - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-        - - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
-            Values:
-            - !Ref LoadBalancerHostPattern
-        - [] # neither LoadBalancerHostPattern nor LoadBalancerPath specified
-      ListenerArn: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-httpslistener-${Env}'}
-      Priority: !Ref LoadBalancerPriority
+      AliasTarget:
+        HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
+        DNSName: !GetAtt 'LoadBalancer.DNSName'
+      HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
+      Name: !Sub
+      - '${SubDomainNameWithDot}${HostedZoneName}'
+      - SubDomainNameWithDot: !Ref SubDomainNameWithDot
+        HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
+      Type: AAAA
+
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: !Sub '${StackName}-admin-service-alb-${Env}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${StackName}-admin-service-alb-${Env}'
+      IpAddressType: !If [HasLoadBalancerSchemeInternal, 'ipv4', 'dualstack']
+      LoadBalancerAttributes:
+      - Key: 'idle_timeout.timeout_seconds'
+        Value: !Ref LoadBalancerIdleTimeout
+      - Key: 'routing.http2.enabled'
+        Value: 'true'
+      Scheme: !Ref LoadBalancerScheme
+      SecurityGroups:
+      - {'Fn::ImportValue': !Sub '${StackName}-ALBPublicSecurityGroup-${Env}'}
+      Subnets: !If
+      - HasLoadBalancerSchemeInternal
+      - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPrivate-${Env}'}]
+      - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPublic-${Env}'}]
+   
+
+  # WebACLAssociation:
+  #   Type: AWS::WAFv2::WebACLAssociation
+  #   Properties:
+  #     ResourceArn: !Ref LoadBalancer
+  #     WebACLArn: {'Fn::ImportValue': !Sub '${StackName}-WebACL-${Env}'}
+
+  HttpListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+      - TargetGroupArn: !Ref DefaultTargetGroup
+        Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  HttpsListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Condition: HasLoadBalancerCertificateArn
+    Properties:
+      Certificates:
+      - CertificateArn: !Ref LoadBalancerCertificateArn
+      DefaultActions:
+      - TargetGroupArn: !Ref DefaultTargetGroup
+        Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: 'ELBSecurityPolicy-FS-1-2-Res-2019-08'
 
   ServiceRole:
     Type: 'AWS::IAM::Role'
@@ -291,6 +308,7 @@ Resources:
 
   Service:
     Type: 'AWS::ECS::Service'
+    DependsOn: HttpListener
     Properties:
       Cluster: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-${Env}'}
       DeploymentConfiguration:
@@ -301,7 +319,7 @@ Resources:
       LoadBalancers:
       - ContainerName: main
         ContainerPort: 80
-        TargetGroupArn: !Ref LoadBalancerTargetGroup
+        TargetGroupArn: !Ref DefaultTargetGroup
       PlacementStrategies:
       - Type: spread
         Field: 'attribute:ecs.availability-zone'
@@ -396,7 +414,7 @@ Resources:
     Condition: HasAutoScaling
     Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
     Properties:
-      PolicyName: !Sub '${StackName}-admin-service-scale-up-${Env}'
+      PolicyName: !Sub '${AWS::StackName}-scale-up'
       PolicyType: StepScaling
       ScalingTargetId: !Ref ScalableTarget
       StepScalingPolicyConfiguration:
@@ -411,7 +429,7 @@ Resources:
     Condition: HasAutoScaling
     Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
     Properties:
-      PolicyName: !Sub '${StackName}-admin-service-scale-down-${Env}'
+      PolicyName: !Sub '${AWS::StackName}-scale-down'
       PolicyType: StepScaling
       ScalingTargetId: !Ref ScalableTarget
       StepScalingPolicyConfiguration:
@@ -441,7 +459,7 @@ Resources:
       Threshold: 60
       AlarmActions:
       - !Ref ScaleUpPolicy
-      
+
   CPUUtilizationLowAlarm:
     Condition: HasAutoScaling
     Type: 'AWS::CloudWatch::Alarm'
@@ -461,31 +479,18 @@ Resources:
       Threshold: 30
       AlarmActions:
       - !Ref ScaleDownPolicy
-
 Outputs:
+ 
   StackName:
     Description: 'Stack name.'
     Value: !Sub '${AWS::StackName}'
   DNSName:
     Description: 'The DNS name for the ECS cluster/service load balancer.'
-    Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
+    Value: !GetAtt 'LoadBalancer.DNSName'
     Export:
       Name: !Sub '${StackName}-admin-service-DNSNAME-${Env}'
   URL:
-    Description: 'URL to the ECS service.' # TODO does not work with LoadBalancerHostPattern
-    Value: !Sub
-    - '${ClusterURL}/${LoadBalancerPath}/'
-    - ClusterURL: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-URL-${Env}'}
-      LoadBalancerPath: !Ref LoadBalancerPath
+    Description: 'URL to the ECS service.'
+    Value: !Sub 'http://${LoadBalancer.DNSName}'
     Export:
       Name: !Sub '${StackName}-admin-service-URL-${Env}'
-  # Route53RecordAdmin:
-  #   Description: 'The connection endpoint for the admin cluster via Route53 record.'
-  #   Value: !Ref 'RecordSet'
-  #   Export:
-  #     Name: !Sub '${StackName}-Route53RecordAdmin-${Env}'
-  # Route53RecordAdminIPv6:
-  #   Description: 'The connection endpoint for the admin cluster via Route53 record.'
-  #   Value: !Ref 'RecordSetIPv6'
-  #   Export:
-  #     Name: !Sub '${StackName}-Route53RecordAdminIpv6-${Env}'
