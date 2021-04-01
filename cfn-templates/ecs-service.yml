@@ -130,32 +130,32 @@ Resources:
             'awslogs-group': {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-log-group-${Env}'}
             'awslogs-stream-prefix': !Ref 'AWS::StackName'
 
-  # RecordSet:
-  #   Type: 'AWS::Route53::RecordSet'
-  #   Properties:
-  #     AliasTarget:
-  #       HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'}
-  #       DNSName: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
-  #     HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
-  #     Name: !Sub
-  #     - '${SubDomainNameWithDot}${HostedZoneName}'
-  #     - SubDomainNameWithDot: !Ref SubDomainNameWithDot
-  #       HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
-  #     Type: A
+  RecordSet:
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      AliasTarget:
+        HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'}
+        DNSName: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
+      HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
+      Name: !Sub
+      - '${SubDomainNameWithDot}${HostedZoneName}'
+      - SubDomainNameWithDot: !Ref SubDomainNameWithDot
+        HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
+      Type: A
 
-  # RecordSetIPv6: # We can not conditionally create this only if the cluster's ALB has IPv6 turned on. Route53 does not let us query a broken AAAA record either. It just shows up as a Route53 record.
-  #   Condition: HasZone
-  #   Type: 'AWS::Route53::RecordSet'
-  #   Properties:
-  #     AliasTarget:
-  #       HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'}
-  #       DNSName: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
-  #     HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
-  #     Name: !Sub
-  #     - '${SubDomainNameWithDot}${HostedZoneName}'
-  #     - SubDomainNameWithDot: !Ref SubDomainNameWithDot
-  #       HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
-  #     Type: AAAA
+  RecordSetIPv6: # We can not conditionally create this only if the cluster's ALB has IPv6 turned on. Route53 does not let us query a broken AAAA record either. It just shows up as a Route53 record.
+    Condition: HasZone
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      AliasTarget:
+        HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-CanonicalHostedZoneID-${Env}'}
+        DNSName: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
+      HostedZoneId: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneId-${Env}'}
+      Name: !Sub
+      - '${SubDomainNameWithDot}${HostedZoneName}'
+      - SubDomainNameWithDot: !Ref SubDomainNameWithDot
+        HostedZoneName: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
+      Type: AAAA
 
   LoadBalancerTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
@@ -479,13 +479,13 @@ Outputs:
       LoadBalancerPath: !Ref LoadBalancerPath
     Export:
       Name: !Sub '${StackName}-admin-service-URL-${Env}'
-  # Route53RecordAdmin:
-  #   Description: 'The connection endpoint for the admin cluster via Route53 record.'
-  #   Value: !Ref 'RecordSet'
-  #   Export:
-  #     Name: !Sub '${StackName}-Route53RecordAdmin-${Env}'
-  # Route53RecordAdminIPv6:
-  #   Description: 'The connection endpoint for the admin cluster via Route53 record.'
-  #   Value: !Ref 'RecordSetIPv6'
-  #   Export:
-  #     Name: !Sub '${StackName}-Route53RecordAdminIpv6-${Env}'
+  Route53RecordAdmin:
+    Description: 'The connection endpoint for the admin cluster via Route53 record.'
+    Value: !Ref 'RecordSet'
+    Export:
+      Name: !Sub '${StackName}-Route53RecordAdmin-${Env}'
+  Route53RecordAdminIPv6:
+    Description: 'The connection endpoint for the admin cluster via Route53 record.'
+    Value: !Ref 'RecordSetIPv6'
+    Export:
+      Name: !Sub '${StackName}-Route53RecordAdminIpv6-${Env}'
