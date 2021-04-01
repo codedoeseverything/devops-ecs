@@ -445,14 +445,8 @@ Outputs:
     Description: 'URL to the ECS service.' # TODO does not work with LoadBalancerHostPattern
     Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-URL-${Env}'}
     Export:
-      Name: !Sub '${StackName}-admin-service-URL-${Env}'
   Route53RecordAdmin:
     Description: 'The connection endpoint for the admin cluster via Route53 record.'
-    Value: !Ref 'RecordSet'
+    Value: !Join [ "", ["https://",!Ref 'RecordSet' ] ]
     Export:
       Name: !Sub '${StackName}-Route53RecordAdmin-${Env}'
-  Route53RecordAdminIPv6:
-    Description: 'The connection endpoint for the admin cluster via Route53 record.'
-    Value: !Ref 'RecordSetIPv6'
-    Export:
-      Name: !Sub '${StackName}-Route53RecordAdminIpv6-${Env}'
