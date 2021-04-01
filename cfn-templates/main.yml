@@ -84,18 +84,18 @@ Parameters:
     ConstraintDescription: 'Must be in the range [30-3600]'
     MinValue: 30
     MaxValue: 3600
-  LoadBalancerHostPattern:
-    Description: 'Optional host pattern. Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
-    Type: String
-    Default: ''
-    ConstraintDescription: 'Must not be longer than 255'
-    MaxLength: 255
-  LoadBalancerPath:
-    Description: 'Optional path part of the path pattern. E.g., for service, the path pattern will be /service/*.  Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
-    Type: String
-    Default: 'service'
-    ConstraintDescription: 'Must not be longer than 255'
-    MaxLength: 255
+  # LoadBalancerHostPattern:
+  #   Description: 'Optional host pattern. Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
+  #   Type: String
+  #   Default: ''
+  #   ConstraintDescription: 'Must not be longer than 255'
+  #   MaxLength: 255
+  # LoadBalancerPath:
+  #   Description: 'Optional path part of the path pattern. E.g., for service, the path pattern will be /service/*.  Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
+  #   Type: String
+  #   Default: 'service'
+  #   ConstraintDescription: 'Must not be longer than 255'
+  #   MaxLength: 255
   LoadBalancerHttps:
     Description: 'If the cluster supports HTTPS (LoadBalancerCertificateArn is set) you can enable HTTPS for the service'
     Type: String
@@ -175,8 +175,8 @@ Resources:
       Parameters:
         StackName: !Ref StackName
         Env: !Ref Env
-        LoadBalancerHostPattern: !Ref LoadBalancerHostPattern
-        LoadBalancerPath: !Ref LoadBalancerPath
+        # LoadBalancerHostPattern: !Ref LoadBalancerHostPattern
+        # LoadBalancerPath: !Ref LoadBalancerPath
         LoadBalancerHttps: !Ref LoadBalancerHttps
         LoadBalancerDeregistrationDelay: !Ref LoadBalancerDeregistrationDelay
         Image: !Ref Image
