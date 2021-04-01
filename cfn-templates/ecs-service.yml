@@ -101,9 +101,9 @@ Parameters:
     MaxValue: 1800
 
 Conditions:
-  HasLoadBalancerHttps: !Equals [!Ref LoadBalancerHttps, 'true']
-  HasLoadBalancerPath: !Not [!Equals [!Ref LoadBalancerPath, '']]
-  HasLoadBalancerHostPattern: !Not [!Equals [!Ref LoadBalancerHostPattern, '']]
+  # HasLoadBalancerHttps: !Equals [!Ref LoadBalancerHttps, 'true']
+  # HasLoadBalancerPath: !Not [!Equals [!Ref LoadBalancerPath, '']]
+  # HasLoadBalancerHostPattern: !Not [!Equals [!Ref LoadBalancerHostPattern, '']]
   HasAutoScaling: !Equals [!Ref AutoScaling, 'true']
 
 Resources:
@@ -224,54 +224,25 @@ Resources:
       Actions:
       - Type: forward
         TargetGroupArn: !Ref LoadBalancerTargetGroup
-      Conditions: !If
-      - HasLoadBalancerPath
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
             Values:
-            - !Ref LoadBalancerHostPattern
-          - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-        - - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
-            Values:
-            - !Ref LoadBalancerHostPattern
-        - [] # neither LoadBalancerHostPattern nor LoadBalancerPath specified
+              - /*
       ListenerArn: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-httplistener-${Env}'}
       Priority: !Ref LoadBalancerPriority
 
   LoadBalancerHttpsListenerRule:
-    Condition: HasLoadBalancerHttps
     Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
     Properties:
       Actions:
       - Type: forward
         TargetGroupArn: !Ref LoadBalancerTargetGroup
-      Conditions: !If
-      - HasLoadBalancerPath
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
             Values:
-            - !Ref LoadBalancerHostPattern
-          - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-        - - Field: path-pattern
-            Values:
-            - !Sub '/${LoadBalancerPath}/*'
-      - !If
-        - HasLoadBalancerHostPattern
-        - - Field: host-header
-            Values:
-            - !Ref LoadBalancerHostPattern
-        - [] # neither LoadBalancerHostPattern nor LoadBalancerPath specified
+              - /*
       ListenerArn: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-httpslistener-${Env}'}
       Priority: !Ref LoadBalancerPriority
 
@@ -472,10 +443,7 @@ Outputs:
       Name: !Sub '${StackName}-admin-service-DNSNAME-${Env}'
   URL:
     Description: 'URL to the ECS service.' # TODO does not work with LoadBalancerHostPattern
-    Value: !Sub
-    - '${ClusterURL}/${LoadBalancerPath}/'
-    - ClusterURL: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-URL-${Env}'}
-      LoadBalancerPath: !Ref LoadBalancerPath
+    Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-URL-${Env}'}
     Export:
       Name: !Sub '${StackName}-admin-service-URL-${Env}'
   Route53RecordAdmin:
