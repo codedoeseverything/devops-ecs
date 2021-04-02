@@ -1,0 +1,124 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This is ECS Cluster cloudformation template for core Practera Admin infrastructure
+  design
+
+Metadata:
+  Authors:
+    Description: Sunil and Mihai (sunil@practera.com/mihai@practera.com) based on
+      AWS quickstart/widdix and best practise.
+  License:
+    Description: Copyright 2020 Intersective PTY LTD and its affiliates. All Rights
+      Reserved.
+
+Parameters:
+  StackName:
+    ConstraintDescription: This will be unique string to represent our stack.
+    Default: beta
+    Description: A client/project/product unique name for the stack to idnetify later.
+      This string can include numbers, lowercase letters, uppercase letters, and hyphens
+      (-). It cannot start or end with a hyphen (-).
+    Type: String
+    AllowedValues: [au,us,uk,p2,lf,nu,alpha,beta,shared]
+  Env:
+    Description: Environment type.
+    Default: stage
+    Type: String
+    AllowedValues:
+      - sandbox
+      - stage
+      - live
+    ConstraintDescription: must specify sandbox,stage,live.
+  Scope:
+    Description: 'Specify wether WAF shall be used with CloudFront or regional (ALB, API Gateway, and AppSync).'
+    Type: String
+    Default: 'REGIONAL'
+    AllowedValues:
+    - 'REGIONAL'
+    - 'CLOUDFRONT'
+  RateLimit:
+    Description: 'The maximum number of requests from a single IP address that are allowed in a five-minute period.'
+    Type: Number
+    Default: 100
+    MinValue: 100
+    MaxValue: 20000000
+  RateLimitEffect:
+    Description: 'Block or count requests that exceed the rate limit. Alterantively, disable rate limiting at all.'
+    Type: String
+    Default: 'Block'
+    AllowedValues:
+    - 'Disable'
+    - 'Block'
+    - 'Count'
+  ReputationListEffect:
+    Description: 'Block or count requests with bad reputation. Alterantively, disable reputation list at all.'
+    Type: String
+    Default: 'Disable'
+    AllowedValues:
+    - 'Disable'
+    - 'Block'
+    - 'Count'
+
+Conditions:
+  EnableRateLimit: !Not [!Equals [!Ref RateLimitEffect, 'Disable']]
+  BlockRateLimit: !Equals [!Ref RateLimitEffect, 'Block']
+  EnableReputationList: !Not [!Equals [!Ref ReputationListEffect, 'Disable']]
+  BlockReputationList: !Equals [!Ref ReputationListEffect, 'Block']
+
+Resources:
+  WebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      DefaultAction:
+        Allow: {}
+      Description: !Sub 'A collection of rules for ${StackName}-admin-elb-${Env}'
+      Name: !Sub '${StackName}-admin-elb-waf-${Env}'
+      Rules:
+      - !If
+        - EnableReputationList
+        - Name: AWSReputationList
+          Priority: 1
+          OverrideAction: !If
+          - BlockReputationList
+          - None: {}
+          - Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSReputationList
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesAmazonIpReputationList
+        - !Ref 'AWS::NoValue'
+      - !If
+        - EnableRateLimit
+        - Name: RateLimit
+          Priority: 2
+          Statement:
+            RateBasedStatement:
+              Limit: !Ref RateLimit
+              AggregateKeyType: IP
+          Action: !If
+          - BlockRateLimit
+          - Block: {}
+          - Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimit
+        - !Ref 'AWS::NoValue'
+      Scope: !Ref Scope
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub '${StackName}-admin-elb-waf-logs-metric-${Env}'
+        SampledRequestsEnabled: true
+Outputs:
+  StackName:
+    Description: 'Stack name.'
+    Value: !Sub '${AWS::StackName}'
+  WebACL:
+    Description: 'The ARN of the Web ACL.'
+    Value: !GetAtt 'WebACL.Arn'
+    Export:
+      Name: !Sub '${StackName}-admin-elb-WebACL-${Env}'

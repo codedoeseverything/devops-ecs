@@ -13,6 +13,11 @@ MinCapacityTask=1
 SubDomainNameWithDot=testingcore.
 TaskAutoScaling=true
 HealthCheckGracePeriod=60
+Scope=REGIONAL
+RateLimit=100
+RateLimitEffect=Block
+ReputationListEffect=Disable
+
 
 
 

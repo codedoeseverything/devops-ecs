@@ -147,9 +147,60 @@ Parameters:
     Default: 60
     MinValue: 0
     MaxValue: 1800
+  Scope:
+    Description: 'Specify wether WAF shall be used with CloudFront or regional (ALB, API Gateway, and AppSync).'
+    Type: String
+    Default: 'REGIONAL'
+    AllowedValues:
+    - 'REGIONAL'
+    - 'CLOUDFRONT'
+  RateLimit:
+    Description: 'The maximum number of requests from a single IP address that are allowed in a five-minute period.'
+    Type: Number
+    Default: 100
+    MinValue: 100
+    MaxValue: 20000000
+  RateLimitEffect:
+    Description: 'Block or count requests that exceed the rate limit. Alterantively, disable rate limiting at all.'
+    Type: String
+    Default: 'Block'
+    AllowedValues:
+    - 'Disable'
+    - 'Block'
+    - 'Count'
+  ReputationListEffect:
+    Description: 'Block or count requests with bad reputation. Alterantively, disable reputation list at all.'
+    Type: String
+    Default: 'Disable'
+    AllowedValues:
+    - 'Disable'
+    - 'Block'
+    - 'Count'
   
 
+Conditions:
+  CreateLiveResources: !Equals [!Ref EnvType, live]
+  CreateSandboxResources: !Equals [!Ref EnvType, sandbox]
+  CreateStageResources: !Equals [!Ref EnvType, stage]
+
 Resources:
+
+  WAFELBStack:
+    Condition: CreateLiveResources
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/elb-waf.yml'
+      Parameters:
+        StackName: !Ref StackName
+        Env: !Ref Env
+        Scope: !Ref Scope
+        RateLimit: !Ref RateLimit
+        RateLimitEffect: !Ref RateLimitEffect
+        ReputationListEffect: !Ref ReputationListEffect
+
+
+    
+
   ECSClusterStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -186,6 +237,8 @@ Resources:
         SubDomainNameWithDot: !Ref SubDomainNameWithDot
         AutoScaling: !Ref TaskAutoScaling
         HealthCheckGracePeriod: !Ref HealthCheckGracePeriod
+
+   
        
 
 

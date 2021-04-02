@@ -1,6 +1,6 @@
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This is ECS Cluster cloudformation template for core Practera Admin infrastructure
+Description: This is ECS Service cloudformation template for core Practera Admin infrastructure
   design
 
 Metadata:
@@ -39,7 +39,7 @@ Parameters:
   LoadBalancerHostPattern:
     Description: 'Optional host pattern. Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
     Type: String
-    Default: ''
+    Default: ''HasWAF
     ConstraintDescription: 'Must not be longer than 255'
     MaxLength: 255
   LoadBalancerPath:

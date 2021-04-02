@@ -162,6 +162,9 @@ Conditions:
   HasLoadBalancerSchemeInternal: !Equals [!Ref LoadBalancerScheme, 'internal']
   HasLoadBalancerCertificateArn: !Not [!Equals [!Ref LoadBalancerCertificateArn, '']]
   HasManagedPolicyArns: !Not [!Equals [!Ref ManagedPolicyArns, '']]
+  CreateLiveResources: !Equals [!Ref EnvType, live]
+  CreateSandboxResources: !Equals [!Ref EnvType, sandbox]
+  CreateStageResources: !Equals [!Ref EnvType, stage]
 
 Resources:
   Cluster:
@@ -371,7 +374,7 @@ Resources:
   LoadBalancer: # not monitored, but DefaultTargetGroup is monitored!
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:
-      Name: !Sub '${StackName}-admin-cluster-alb-${Env}'
+      # Name: !Sub '${StackName}-admin-cluster-alb-${Env}'
       Tags:
         - Key: Name
           Value: !Sub '${StackName}-admin-cluster-alb-${Env}'
@@ -387,6 +390,15 @@ Resources:
       - HasLoadBalancerSchemeInternal
       - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPrivate-${Env}'}]
       - !Split [',', {'Fn::ImportValue': !Sub '${StackName}-SubnetsPublic-${Env}'}]
+
+  
+  WebACLAssociation:
+    Condition: CreateLiveResources
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Ref LoadBalancer
+      WebACLArn: {'Fn::ImportValue': !Sub '${StackName}-admin-elb-WebACL-${Env}'}
+      
   
   DefaultTargetGroup: # this is used as the fall-back target group and is used to health checking the ECS agent. Services use their own ListenerRules to accept traffic based on path prefixes.
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
