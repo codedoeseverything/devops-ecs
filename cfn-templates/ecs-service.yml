@@ -39,7 +39,7 @@ Parameters:
   LoadBalancerHostPattern:
     Description: 'Optional host pattern. Specify LoadBalancerPath and/or LoadBalancerHostPattern.'
     Type: String
-    Default: ''HasWAF
+    Default: ''
     ConstraintDescription: 'Must not be longer than 255'
     MaxLength: 255
   LoadBalancerPath:
