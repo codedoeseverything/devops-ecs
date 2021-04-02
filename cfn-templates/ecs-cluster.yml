@@ -715,6 +715,7 @@ Resources:
             yum install -y aws-cfn-bootstrap
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate --region ${AWS::Region}
             /opt/aws/bin/cfn-signal -e 0 --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+
   AutoScalingGroup:
     Type: 'AWS::AutoScaling::AutoScalingGroup'
     Properties:
@@ -724,8 +725,8 @@ Resources:
         Version: !GetAtt 'LaunchTemplate.LatestVersionNumber'
       MinSize: !Ref MinSize
       MaxSize: !Ref MaxSize
-      Cooldown: '600'
-      HealthCheckGracePeriod: 900 # needs to be in sync with CreationPolicy/UpdatePolicy timeout
+      Cooldown: '300' # modified from 600 to 300
+      HealthCheckGracePeriod: 300 # modifed from 900 to 300; Also needs to be in sync with CreationPolicy/UpdatePolicy timeout
       HealthCheckType: ELB
       TargetGroupARNs:
       - !Ref DefaultTargetGroup
@@ -745,10 +746,10 @@ Resources:
         PropagateAtLaunch: true
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT15M
+        Timeout: PT5M # Modified from 15M to 5M to align HealthCheckGracePeriod
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        PauseTime: PT15M
+        PauseTime: PT5M # Modified from 15M to 5M to align HealthCheckGracePeriod
         SuspendProcesses:
         - HealthCheck
         - ReplaceUnhealthy
@@ -849,7 +850,7 @@ Resources:
   AutoScalingGroupTerminatingLifecycleHook:
     Type: 'AWS::AutoScaling::LifecycleHook'
     Properties:
-      HeartbeatTimeout: 600
+      HeartbeatTimeout: 120 # Modified from 600 to 120
       DefaultResult: CONTINUE
       AutoScalingGroupName: !Ref AutoScalingGroup
       LifecycleTransition: 'autoscaling:EC2_INSTANCE_TERMINATING'
