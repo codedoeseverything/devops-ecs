@@ -162,9 +162,9 @@ Conditions:
   HasLoadBalancerSchemeInternal: !Equals [!Ref LoadBalancerScheme, 'internal']
   HasLoadBalancerCertificateArn: !Not [!Equals [!Ref LoadBalancerCertificateArn, '']]
   HasManagedPolicyArns: !Not [!Equals [!Ref ManagedPolicyArns, '']]
-  CreateLiveResources: !Equals [!Ref EnvType, live]
-  CreateSandboxResources: !Equals [!Ref EnvType, sandbox]
-  CreateStageResources: !Equals [!Ref EnvType, stage]
+  CreateLiveResources: !Equals [!Ref Env, live]
+  CreateSandboxResources: !Equals [!Ref Env, sandbox]
+  CreateStageResources: !Equals [!Ref Env, stage]
 
 Resources:
   Cluster:
