@@ -883,7 +883,7 @@ Resources:
             - Name: AutoScalingGroupName
               Value: !Ref AutoScalingGroup
           Stat: Minimum
-          Period: 60
+          Period: 300 #changed to 300 from 60
         ReturnData: false
       - Id: cpu
         MetricStat:
