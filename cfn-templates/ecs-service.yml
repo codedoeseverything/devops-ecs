@@ -411,6 +411,7 @@ Resources:
       Threshold: 60
       AlarmActions:
       - !Ref ScaleUpPolicy
+      - {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
       
   CPUUtilizationLowAlarm:
     Condition: HasAutoScaling
@@ -431,6 +432,7 @@ Resources:
       Threshold: 30
       AlarmActions:
       - !Ref ScaleDownPolicy
+      - {'Fn::ImportValue': !Sub '${StackName}-ChatBotSNSTopicARN-${Env}'}
 
 Outputs:
   StackName:
