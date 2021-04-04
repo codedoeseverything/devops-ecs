@@ -218,8 +218,19 @@ Resources:
         StopContainerTimeoutInSeconds: !Ref StopContainerTimeoutInSeconds
   
 
-  ECSServiceStack:
+  ECSTaskDefStack:
     DependsOn: [ECSClusterStack]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-task-def.yml'
+      Parameters:
+        StackName: !Ref StackName
+        Env: !Ref Env
+        Image: !Ref Image
+
+
+  ECSServiceStack:
+    DependsOn: [ECSClusterStack, ECSTaskDefStack]
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub 'https://${CFNS3BucketName}.s3.${CFNS3BucketRegion}.amazonaws.com/${StackName}/${CFNS3BucketRegion}/cfn-templates/ecs-service.yml'
@@ -230,7 +241,6 @@ Resources:
         # LoadBalancerPath: !Ref LoadBalancerPath
         LoadBalancerHttps: !Ref LoadBalancerHttps
         LoadBalancerDeregistrationDelay: !Ref LoadBalancerDeregistrationDelay
-        Image: !Ref Image
         DesiredCount: !Ref DesiredCountTask
         MaxCapacity: !Ref MaxCapacityTask
         MinCapacity: !Ref MinCapacityTask

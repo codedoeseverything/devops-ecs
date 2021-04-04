@@ -1,0 +1,69 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This is ECS task defination cloudformation template for core Practera Admin infrastructure
+  design
+
+Metadata:
+  Authors:
+    Description: Sunil and Mihai (sunil@practera.com/mihai@practera.com) based on
+      AWS quickstart/widdix and best practise.
+  License:
+    Description: Copyright 2020 Intersective PTY LTD and its affiliates. All Rights
+      Reserved.
+
+Parameters:
+  StackName:
+    ConstraintDescription: This will be unique string to represent our stack.
+    Default: beta
+    Description: A client/project/product unique name for the stack to idnetify later.
+      This string can include numbers, lowercase letters, uppercase letters, and hyphens
+      (-). It cannot start or end with a hyphen (-).
+    Type: String
+    AllowedValues: [au,us,uk,p2,lf,nu,alpha,beta,shared]
+  Env:
+    Description: Environment type.
+    Default: stage
+    Type: String
+    AllowedValues:
+      - sandbox
+      - stage
+      - live
+    ConstraintDescription: must specify sandbox,stage,live.
+  Image:
+    Description: 'The image to use for a container, which is passed directly to the Docker daemon. You can use images in the Docker Hub registry or specify other repositories (repository-url/image:tag).'
+    Type: String
+    Default: nginx
+
+Resources:
+  TaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${StackName}-admin-td-${Env}'
+      Family: !Sub '${StackName}-admin-td-${Env}'
+      NetworkMode: bridge
+      ContainerDefinitions:
+      - Name: main # if you change this, you also must change the AWS::ECS::Service
+        Image: !Ref Image
+        Memory: 128
+        PortMappings:
+        - ContainerPort: 80 # if you change this, you also must change the AWS::ECS::Service
+          Protocol: tcp
+        Essential: true
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            'awslogs-region': !Ref 'AWS::Region'
+            'awslogs-group': {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-log-group-${Env}'}
+            'awslogs-stream-prefix': !Ref 'AWS::StackName'
+
+Outputs:
+  StackName:
+    Description: 'Stack name.'
+    Value: !Sub '${AWS::StackName}'
+  TaskDefinition:
+    Description: 'Admin TaskDefinition'
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub '${StackName}-admin-td-${Env}'
