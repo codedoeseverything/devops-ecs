@@ -384,15 +384,32 @@ Resources:
       - Key: 'deregistration_delay.timeout_seconds'
         Value: '0'
 
+  # HttpListener:
+  #   Type: 'AWS::ElasticLoadBalancingV2::Listener'
+  #   Properties:
+  #     DefaultActions:
+  #     - TargetGroupArn: !Ref DefaultTargetGroup
+  #       Type: forward
+  #     LoadBalancerArn: !Ref LoadBalancer
+  #     Port: 80
+  #     Protocol: HTTP
+
   HttpListener:
-    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
     Properties:
       DefaultActions:
-      - TargetGroupArn: !Ref DefaultTargetGroup
-        Type: forward
+        - RedirectConfig:
+            Host: '#{host}'
+            Path: '/#{path}'
+            Port: '443'
+            Protocol: HTTPS
+            Query: '#{query}'
+            StatusCode: HTTP_301
+          Type: redirect
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
+      
 
   HttpsListener:
     Type: 'AWS::ElasticLoadBalancingV2::Listener'
