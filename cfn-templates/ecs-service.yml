@@ -191,19 +191,19 @@ Resources:
         Value: !GetAtt LoadBalancerTargetGroup.TargetGroupFullName
       TreatMissingData: notBreaching
 
-  LoadBalancerHttpListenerRule:
-    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
-    Properties:
-      Actions:
-      - Type: forward
-        TargetGroupArn: !Ref LoadBalancerTargetGroup
-      Conditions:
-        - Field: path-pattern
-          PathPatternConfig:
-            Values:
-              - /*
-      ListenerArn: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-httplistener-${Env}'}
-      Priority: !Ref LoadBalancerPriority
+  # LoadBalancerHttpListenerRule:
+  #   Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+  #   Properties:
+  #     Actions:
+  #     - Type: forward
+  #       TargetGroupArn: !Ref LoadBalancerTargetGroup
+  #     Conditions:
+  #       - Field: path-pattern
+  #         PathPatternConfig:
+  #           Values:
+  #             - /*
+  #     ListenerArn: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-httplistener-${Env}'}
+  #     Priority: !Ref LoadBalancerPriority
 
   LoadBalancerHttpsListenerRule:
     Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
