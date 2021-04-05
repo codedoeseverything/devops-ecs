@@ -1,12 +1,14 @@
 service: ${env:STACK_NAME}
 
+stackName: ${env:STACK_NAME}-redis-progress-cache-${env:ENV}
+
 frameworkVersion: '2'
 
 useDotenv: true
 
 package:
   include:
-    - artifacts/**/*
+    - src/**/*
     - serverless.yml
     - .env
     - package.json
