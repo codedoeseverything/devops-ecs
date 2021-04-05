@@ -7,8 +7,9 @@ useDotenv: true
 package:
   individually: true
   exclude:
+    - "*"
+    - "**/**"
     - ".*/**"
-    - "*/**"
 
 
 provider:
