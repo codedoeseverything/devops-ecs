@@ -16,6 +16,7 @@ provider:
     ENDPOINT: {'Fn::ImportValue': !Sub '${env:STACK_NAME}-Route53RecordAdmin-${env:ENV}'}
 
   iamRoleStatements:
+    name: ${env:STACK_NAME}-redis-progress-cache-${env:ENV} # Optional custom name for default IAM role
     - Effect: Allow
       Action:
         - logs:CreateLogGroup
