@@ -8,6 +8,9 @@ package:
   individually: true
   exclude:
     - "*"
+    - "**/**"
+    - ".*/**"
+
 
 provider:
   name: aws
