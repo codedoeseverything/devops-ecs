@@ -14,36 +14,38 @@ provider:
   lambdaHashingVersion: 20201221
   environment: 
     ENDPOINT: {'Fn::ImportValue': !Sub '${env:STACK_NAME}-Route53RecordAdmin-${env:ENV}'}
-
-  iamRoleStatements:
-    name: ${env:STACK_NAME}-redis-progress-cache-${env:ENV} # Optional custom name for default IAM role
-    - Effect: Allow
-      Action:
-        - logs:CreateLogGroup
-        - logs:CreateLogStream
-        - logs:DeleteLogGroup
-        - logs:PutLogEvents
-        - logs:DescribeLogStreams
-        - logs:DescribeLogGroups
-        - logs:FilterLogEvents
-      Resource: "arn:aws:logs:*:*:*"
-    - Effect: Allow
-      Action:
-        - lambda:AddPermission
-        - lambda:CreateAlias
-        - lambda:DeleteFunction
-        - lambda:InvokeFunction
-        - lambda:PublishVersion
-        - lambda:RemovePermission
-        - lambda:Update*
-      Resource:
-        - arn:aws:lambda:*:*:function:*
-    - Effect: Allow
-      Action:
-        - secretsmanager:GetSecretValue
-        - ssm:*
-      Resource:
-        - arn:aws:secretsmanager:*:*:secret:*
+  
+  iam:
+    role:
+      name: ${env:STACK_NAME}-redis-progress-cache-${env:ENV} # Optional custom name for default IAM role
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:DeleteLogGroup
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+            - logs:DescribeLogGroups
+            - logs:FilterLogEvents
+          Resource: "arn:aws:logs:*:*:*"
+        - Effect: Allow
+          Action:
+            - lambda:AddPermission
+            - lambda:CreateAlias
+            - lambda:DeleteFunction
+            - lambda:InvokeFunction
+            - lambda:PublishVersion
+            - lambda:RemovePermission
+            - lambda:Update*
+          Resource:
+            - arn:aws:lambda:*:*:function:*
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+            - ssm:*
+          Resource:
+            - arn:aws:secretsmanager:*:*:secret:*
 
 functions:
   redis-progress-cache:
