@@ -1,0 +1,53 @@
+service: ${env:STACK_NAME}-${env:SUBDOMAIN}-redis-progress-cache
+
+frameworkVersion: '2'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  timeout: 300
+  memorySize: 128
+  region: ${env:REGION}
+  stage: ${env:ENV}
+  lambdaHashingVersion: 20201221
+  environment: 
+    ENDPOINT: {'Fn::ImportValue': !Sub '${env:STACK_NAME}-Route53RecordAdmin-${env:ENV}'}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:DeleteLogGroup
+        - logs:PutLogEvents
+        - logs:DescribeLogStreams
+        - logs:DescribeLogGroups
+        - logs:FilterLogEvents
+      Resource: "arn:aws:logs:*:*:*"
+    - Effect: Allow
+      Action:
+        - lambda:AddPermission
+        - lambda:CreateAlias
+        - lambda:DeleteFunction
+        - lambda:InvokeFunction
+        - lambda:PublishVersion
+        - lambda:RemovePermission
+        - lambda:Update*
+      Resource:
+        - arn:aws:lambda:*:*:function:*
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+        - ssm:*
+      Resource:
+        - arn:aws:secretsmanager:*:*:secret:*
+
+functions:
+  redis-progress-cache:
+    handler: src/handler.handler
+    events:
+      # Invoke Lambda function every minute
+      - schedule: rate(1 hour)
+        enabled: true

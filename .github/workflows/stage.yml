@@ -81,6 +81,44 @@ jobs:
 
 
 ################################################
+#  NODE ENV
+################################################    
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      
+
+################################################
+#  NODE MODULES CACHE  
+################################################
+      - name: Cache node modules
+        uses: actions/cache@v2
+        id: cache-node-modules
+        env:
+          cache-name: cache
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: |
+            ~/.npm
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+
+################################################
+#  NODE MODULES INSTALL  
+################################################
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run:  npm install
+
+
+################################################
 #  CLOUDFORMATION LINT ANALYSIS TEST 
 ################################################
       # - name: Run cloudformation template Lint analysis test using cfn-lint
@@ -179,6 +217,16 @@ jobs:
         run: |
           python3 scripts/cfn-deploy.py $STACK_NAME-$SUBDOMAIN-$ENV cfn-templates/main.yml config/cfn-params.json config/cfn-tags.json
          
+
+
+########################################################################
+#  SERVERLESS REDIS PROGRESS CACHE FOR ADMIN- SCHEDULED every 1 hour
+########################################################################
+      - name: Serverless redis-progress-cache service
+        run: |
+          cp serverless-redis-cache.yml serverless.yml
+          node_modules/.bin/serverless deploy
+          rm serverless.yml
 
 
 

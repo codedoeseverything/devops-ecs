@@ -423,6 +423,6 @@ Outputs:
       Name: !Sub '${StackName}-admin-service-URL-${Env}'
   Route53RecordAdmin:
     Description: 'The connection endpoint for the admin cluster via Route53 record.'
-    Value: !Join [ "", ["https://",!Ref 'RecordSet' ] ]
+    Value: !Join [ "", ["https://",!Ref 'RecordSet',"/" ] ]
     Export:
       Name: !Sub '${StackName}-Route53RecordAdmin-${Env}'

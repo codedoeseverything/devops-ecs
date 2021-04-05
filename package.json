@@ -1,0 +1,27 @@
+{
+  "name": "redis-progress-cache",
+  "version": "1.0.0",
+  "description": "redis-progress-cache for admin",
+  "main": "handler.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": " "
+  },
+  "keywords": [
+    "redis-progress-cache"
+  ],
+  "dependencies": {
+    "dotenv": "^8.2.0"
+  },
+  "author": "Mihai",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless": "^2.33.1"
+  }
+}
