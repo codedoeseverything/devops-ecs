@@ -225,7 +225,8 @@ jobs:
       - name: Serverless redis-progress-cache service
         run: |
           cp serverless-redis-cache.yml serverless.yml
-          node_modules/.bin/serverless deploy
+          node_modules/.bin/serverless package --package artifacts/${{ env.ENV }} --stage ${{ env.ENV }} --region ${{ env.REGION }} -v
+          node_modules/.bin/serverless deploy --stage ${{ env.ENV }} --region ${{ env.REGION }} --package artifacts/${{ env.ENV }} -v
           rm serverless.yml
 
 

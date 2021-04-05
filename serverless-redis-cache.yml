@@ -1,18 +1,19 @@
-service: ${env:STACK_NAME}
-
-stackName: ${env:STACK_NAME}-redis-progress-cache-${env:ENV}
+service: ${env:STACK_NAME}-cache
 
 frameworkVersion: '2'
 
 useDotenv: true
 
 package:
+  exclude:
+    - .github/**
   include:
-    - src/**/*
+    - artifacts/**/*
     - serverless.yml
     - .env
     - package.json
     - package-lock.json
+
 
 provider:
   name: aws
