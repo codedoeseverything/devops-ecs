@@ -1,8 +1,16 @@
-service: ${env:STACK_NAME}-${env:SUBDOMAIN}-redis-progress-cache
+service: ${env:STACK_NAME}-redis-progress-cache
 
 frameworkVersion: '2'
 
 useDotenv: true
+
+package:
+  include:
+    - artifacts/**/*
+    - serverless.yml
+    - .env
+    - package.json
+    - package-lock.json
 
 provider:
   name: aws
