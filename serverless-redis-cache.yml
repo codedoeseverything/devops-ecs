@@ -5,14 +5,10 @@ frameworkVersion: '2'
 useDotenv: true
 
 package:
+  individually: true
   exclude:
-    - .github/**
-  include:
-    - artifacts/**/*
-    - serverless.yml
-    - .env
-    - package.json
-    - package-lock.json
+    - ".*/**"
+    - "*/**"
 
 
 provider:
@@ -62,4 +58,11 @@ functions:
     events:
       # Invoke Lambda function every minute
       - schedule: rate(1 hour)
-        enabled: true
+    package:
+      include:
+        - src/**
+        - node_modules/**
+        - serverless.yml
+        - .env
+        - package.json
+        - package-lock.json
