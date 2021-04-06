@@ -6,6 +6,7 @@ DrainingTimeoutInSeconds=300
 StopContainerTimeoutInSeconds=30
 LoadBalancerHttps=true
 LoadBalancerDeregistrationDelay=60
+PrimaryImage=nginx
 DesiredCountTask=1
 MaxCapacityTask=100
 MinCapacityTask=1
@@ -18,7 +19,11 @@ RateLimitEffect=Block
 ReputationListEffect=Disable
 BranchName=release/master
 MailingServer=smtp
-Image=nginx
+
+
+
+
+
 
 
 

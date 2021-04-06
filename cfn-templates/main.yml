@@ -110,7 +110,7 @@ Parameters:
     ConstraintDescription: 'Must be in the range [0-3600]'
     MinValue: 0
     MaxValue: 3600
-  Image:
+  PrimaryImage:
     Description: 'The image to use for a container, which is passed directly to the Docker daemon. You can use images in the Docker Hub registry or specify other repositories (repository-url/image:tag).'
     Type: String
     Default: nginx
@@ -234,7 +234,7 @@ Resources:
       Parameters:
         StackName: !Ref StackName
         Env: !Ref Env
-        Image: !Ref Image
+        PrimaryImage: !Ref PrimaryImage
         BranchName: !Ref BranchName
         MailingServer: !Ref MailingServer
 
