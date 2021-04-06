@@ -176,6 +176,14 @@ Parameters:
     - 'Disable'
     - 'Block'
     - 'Count'
+  BranchName:
+    Description: The branch that needs to be deployed
+    Type: String
+    Default: 'release/florina'
+  MailingServer:
+    Type: String
+    Description: What should be used to send emails
+    AllowedValues: [mailtrap,smtp]
   
 
 Conditions:
@@ -227,6 +235,8 @@ Resources:
         StackName: !Ref StackName
         Env: !Ref Env
         Image: !Ref Image
+        BranchName: !Ref BranchName
+        MailingServer: !Ref MailingServer
 
 
   ECSServiceStack:

@@ -233,6 +233,16 @@ Resources:
             - 'logs:PutLogEvents'
             - 'logs:DescribeLogStreams'
             Resource: !GetAtt 'LogGroup.Arn'
+      - PolicyName: secretmanager
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'secretsmanager:GetSecretValue',
+            - 'ssm:GetParameters',
+            - 'kms:Decrypt',
+            Resource: '*'
 
   IAMPolicySSHAccess:
     Type: 'AWS::IAM::Policy'
