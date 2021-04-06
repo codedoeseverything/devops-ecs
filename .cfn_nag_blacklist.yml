@@ -33,3 +33,11 @@ RulesToSuppress:
   reason: "ElastiCache ReplicationGroup AuthToken must not be a plaintext string or a Ref to a Parameter with a Default value.  Can be Ref to a NoEcho Parameter without a Default, or a dynamic reference to a secretsmanager/ssm-secure value."
 - id: F80
   reason: "RDS instance should have deletion protection enabled"
+- id: W52
+  reason: "Elastic Load Balancer V2 should have access logging enabled"
+- id: W56
+  reason: "Elastic Load Balancer V2 Listener Protocol should use HTTPS for ALBs"
+- id: W48
+  reason: "SQS Queue should specify KmsMasterKeyId property"
+- id: W58
+  reason: "Lambda functions require permission to write CloudWatch Logs"

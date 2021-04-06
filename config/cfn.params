@@ -19,6 +19,8 @@ RateLimitEffect=Block
 ReputationListEffect=Disable
 BranchName=release/master
 MailingServer=smtp
+Image=nginx
+
 
 
 

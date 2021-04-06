@@ -411,16 +411,6 @@ Outputs:
   StackName:
     Description: 'Stack name.'
     Value: !Sub '${AWS::StackName}'
-  DNSName:
-    Description: 'The DNS name for the ECS cluster/service load balancer.'
-    Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-DNSNAME-${Env}'}
-    Export:
-      Name: !Sub '${StackName}-admin-service-DNSNAME-${Env}'
-  URL:
-    Description: 'URL to the ECS service.' # TODO does not work with LoadBalancerHostPattern
-    Value: {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-URL-${Env}'}
-    Export:
-      Name: !Sub '${StackName}-admin-service-URL-${Env}'
   Route53RecordAdmin:
     Description: 'The connection endpoint for the admin cluster via Route53 record.'
     Value: !Join [ "", ["https://",!Ref 'RecordSet',"/" ] ]

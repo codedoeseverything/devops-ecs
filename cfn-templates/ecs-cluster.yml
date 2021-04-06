@@ -239,9 +239,9 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - 'secretsmanager:GetSecretValue',
-            - 'ssm:GetParameters',
-            - 'kms:Decrypt',
+            - 'secretsmanager:GetSecretValue'
+            - 'ssm:GetParameters'
+            - 'kms:Decrypt'
             Resource: '*'
 
   IAMPolicySSHAccess:
@@ -1038,8 +1038,13 @@ Resources:
         Statement:
         - Effect: Allow
           Action:
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:DeleteLogGroup
+          - logs:PutLogEvents
+          - logs:DescribeLogStreams
+          - logs:DescribeLogGroups
+          - logs:FilterLogEvents
           Resource: !GetAtt 'ScaleUpLogGroup.Arn'
 
   ScaleUpLambdaPermission:
@@ -1164,8 +1169,13 @@ Resources:
         Statement:
         - Effect: Allow
           Action:
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:DeleteLogGroup
+          - logs:PutLogEvents
+          - logs:DescribeLogStreams
+          - logs:DescribeLogGroups
+          - logs:FilterLogEvents
           Resource: !GetAtt 'DrainInstanceLogGroup.Arn'
 
   DrainInstanceEventSourceMapping:

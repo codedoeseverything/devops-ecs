@@ -1,15 +1,6 @@
 [
   {
-    "filename": "cfn-templates/aurora-serverless-postgres.yml",
-    "file_results": {
-      "failure_count": 0,
-      "violations": [
-
-      ]
-    }
-  },
-  {
-    "filename": "cfn-templates/aurora-postgres.yml",
+    "filename": "cfn-templates/elb-waf.yml",
     "file_results": {
       "failure_count": 0,
       "violations": [
@@ -27,7 +18,25 @@
     }
   },
   {
-    "filename": "cfn-templates/redis.yml",
+    "filename": "cfn-templates/ecs-task-def.yml",
+    "file_results": {
+      "failure_count": 0,
+      "violations": [
+
+      ]
+    }
+  },
+  {
+    "filename": "cfn-templates/ecs-service.yml",
+    "file_results": {
+      "failure_count": 0,
+      "violations": [
+
+      ]
+    }
+  },
+  {
+    "filename": "cfn-templates/ecs-cluster.yml",
     "file_results": {
       "failure_count": 0,
       "violations": [

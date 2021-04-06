@@ -41,6 +41,10 @@ Parameters:
     Type: String
     Description: What should be used to send emails
     AllowedValues: [mailtrap,smtp]
+  Hostname:
+    Description: The URI for the hostname for the images
+    Type: String
+    Default: 'admin.local'
 
 Resources:
 
@@ -75,9 +79,9 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-              - 'secretsmanager:GetSecretValue',
-              - 'ssm:GetParameters',
-              - 'kms:Decrypt',
+              - 'secretsmanager:GetSecretValue'
+              - 'ssm:GetParameters'
+              - 'kms:Decrypt'
               Resource: '*'
 
 
@@ -104,79 +108,79 @@ Resources:
             'awslogs-region': !Ref 'AWS::Region'
             'awslogs-group': {'Fn::ImportValue': !Sub '${StackName}-admin-cluster-log-group-${Env}'}
             'awslogs-stream-prefix': !Ref 'AWS::StackName'
-        #Added
-        Command: 
-        - "/sbin/my_init"
-        # MemoryReservation: 256
-        ReadonlyRootFilesystem: false
-        Hostname: !Ref Hostname
-        ExtraHosts:
-        - Hostname: local.practera.com
-          IpAddress: "127.0.0.1"
+        # #Added
+        # Command: 
+        # - "/sbin/my_init"
+        # # MemoryReservation: 256
+        # ReadonlyRootFilesystem: false
+        # Hostname: !Ref Hostname
+        # ExtraHosts:
+        # - Hostname: local.practera.com
+        #   IpAddress: "127.0.0.1"
 
-        Secrets:
-        - Name: PRACTERA_AUTHY
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-AuthySecret-${Env}'} 
-        - Name: PRACTERA_DATABASE
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-CoreDBSecret-${Env}'}
-        - Name: PRACTERA_APPKEY
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-AppKeySecret-${Env}'}
-        - Name: PRACTERA_TWILIO
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-TwilioSecret-${Env}'}
-        - Name: PRACTERA_FILESTACK
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-FilestackSecret-${Env}'}
-        - Name: PRACTERA_JWT
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-JwtSecret-${Env}'}
-        - Name: PRACTERA_JWTPUB
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-JwtPubSecret-${Env}'}
-        - Name: PRACTERA_MAILTRAP
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-MailtrapSecret-${Env}'}
-        - Name: PRACTERA_MANDRILL
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-MandrillSecret-${Env}'}
-        - Name: PRACTERA_NEWRELIC
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-NewrelicSecret-${Env}'}
-        - Name: PRACTERA_PUSHER
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-PusherSecret-${Env}'}
-        - Name: PRACTERA_S3
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-S3Secret-${Env}'}
-        - Name: PRACTERA_INTERCOM
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-IntercomSecret-${Env}'}
-        - Name: PRACTERA_LOGIN_SECRETS
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-LoginCoreSecrets-${Env}'}
-        - Name: PRACTERA_CUTIE
-          ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-CutieAppUrl-${Env}'}
+        # Secrets:
+        # - Name: PRACTERA_AUTHY
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-AuthySecret-${Env}'} 
+        # - Name: PRACTERA_DATABASE
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-CoreDBSecret-${Env}'}
+        # - Name: PRACTERA_APPKEY
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-AppKeySecret-${Env}'}
+        # - Name: PRACTERA_TWILIO
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-TwilioSecret-${Env}'}
+        # - Name: PRACTERA_FILESTACK
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-FilestackSecret-${Env}'}
+        # - Name: PRACTERA_JWT
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-JwtSecret-${Env}'}
+        # - Name: PRACTERA_JWTPUB
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-JwtPubSecret-${Env}'}
+        # - Name: PRACTERA_MAILTRAP
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-MailtrapSecret-${Env}'}
+        # - Name: PRACTERA_MANDRILL
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-MandrillSecret-${Env}'}
+        # - Name: PRACTERA_NEWRELIC
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-NewrelicSecret-${Env}'}
+        # - Name: PRACTERA_PUSHER
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-PusherSecret-${Env}'}
+        # - Name: PRACTERA_S3
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-S3Secret-${Env}'}
+        # - Name: PRACTERA_INTERCOM
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-IntercomSecret-${Env}'}
+        # - Name: PRACTERA_LOGIN_SECRETS
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-LoginCoreSecrets-${Env}'}
+        # - Name: PRACTERA_CUTIE
+        #   ValueFrom: {'Fn::ImportValue': !Sub '${StackName}-CutieAppUrl-${Env}'}
 
-        Environment:
-        - Name: PRACTERA_BRANCH
-          Value: !Ref BranchName
-        - Name: PRACTERA_EMAIL
-          Value: !Ref MailingServer
-        - Name: PRACTERA_DB_HOST
-          Value: {'Fn::ImportValue': !Sub '${StackName}-Route53DBEndpoint-${Env}'} 
-        - Name: PRACTERA_DB_HOST_WRITE
-          Value: {'Fn::ImportValue': !Sub '${StackName}-Route53DBEndpoint-${Env}'} 
-        - Name: PRACTERA_DB_HOST_READ
-          Value: {'Fn::ImportValue': !Sub '${StackName}-Route53DBEndpoint-${Env}'} 
-        - Name: PRACTERA_DB_NAME
-          Value: {'Fn::ImportValue': !Sub '${StackName}-DBNAME-${Env}'} #TODO
-        # - Name: PRACTERA_DB_LOGS_NAME
-        #   Value: !Ref LogsDatabaseName
-        - Name: PRACTERA_DOMAIN
-          Value: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
-        - Name: PRACTERA_URL
-          Value: !Join [ '', [ 'https://', {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'} ] ]
-        - Name: PRACTERA_ENV
-          Value: !Ref Env
-        - Name: PRACTERA_REDIS_HOST
-          Value: {'Fn::ImportValue': !Sub '${StackName}-Route53RecordRedis-${Env}'} 
-        - Name: PRACTERA_REDIS_QUEUE_HOST
-          Value: {'Fn::ImportValue': !Sub '${StackName}-Route53RecordRedis-${Env}'}
-        - Name: PRACTERA_GLOBAL_LOGIN_URL
-          Value: "NA" #TODO
-        - Name: MIGRATION_URL
-          Value: "NA" #TODO
-        - Name: MESSAGING_URL
-          Value: "NA" #TODO
+        # Environment:
+        # - Name: PRACTERA_BRANCH
+        #   Value: !Ref BranchName
+        # - Name: PRACTERA_EMAIL
+        #   Value: !Ref MailingServer
+        # - Name: PRACTERA_DB_HOST
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-Route53DBEndpoint-${Env}'} 
+        # - Name: PRACTERA_DB_HOST_WRITE
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-Route53DBEndpoint-${Env}'} 
+        # - Name: PRACTERA_DB_HOST_READ
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-Route53DBEndpoint-${Env}'} 
+        # - Name: PRACTERA_DB_NAME
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-DBNAME-${Env}'} #TODO
+        # # - Name: PRACTERA_DB_LOGS_NAME
+        # #   Value: !Ref LogsDatabaseName
+        # - Name: PRACTERA_DOMAIN
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'}
+        # - Name: PRACTERA_URL
+        #   Value: !Join [ '', [ 'https://', {'Fn::ImportValue': !Sub '${StackName}-PublicHostedZoneName-${Env}'} ] ]
+        # - Name: PRACTERA_ENV
+        #   Value: !Ref Env
+        # - Name: PRACTERA_REDIS_HOST
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-Route53RecordRedis-${Env}'} 
+        # - Name: PRACTERA_REDIS_QUEUE_HOST
+        #   Value: {'Fn::ImportValue': !Sub '${StackName}-Route53RecordRedis-${Env}'}
+        # - Name: PRACTERA_GLOBAL_LOGIN_URL
+        #   Value: "NA" #TODO
+        # - Name: MIGRATION_URL
+        #   Value: "NA" #TODO
+        # - Name: MESSAGING_URL
+        #   Value: "NA" #TODO
 
 
 
